@@ -1,0 +1,7 @@
+range POS_AXIS_NOT_ZERO = 1..1
+
+TRACKS_SPEED = WAITING,
+WAITING = 	(leftStickNoPercentage -> NOTUSED
+			|leftStickPercentage[v:POS_AXIS_NOT_ZERO] -> USED[v]),
+NOTUSED = (setLeftTrackWanted[0] -> setRightTrackWanted[0] -> trackSpeedCheck -> WAITING),
+USED[v:POS_AXIS_NOT_ZERO] = (setLeftTrackWanted[v] -> setRightTrackWanted[v] -> trackSpeedCheck -> WAITING).

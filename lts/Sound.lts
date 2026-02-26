@@ -1,0 +1,5 @@
+SOUND = STANDBY,
+STANDBY = 	(anyLoopEvent -> LOOP
+			|anyPlayEvent -> PLAY),
+PLAY = (done -> STANDBY),
+LOOP = 	(anyStopEvent -> STANDBY).

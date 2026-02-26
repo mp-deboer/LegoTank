@@ -1,0 +1,8 @@
+// button possibilities: Arrow_Down, Arrow_Left, Arrow_Right, Arrow_Up, Circle, Cross, L1, L3, PS3, R1, R3, Select, Square, Start, Triangle
+
+BUTTON_ANY = WAITING,
+WAITING = (foundController -> RELEASED),
+RELEASED = 	(lostController -> WAITING
+			|anyPressed -> PRESSED),
+PRESSED = 	(lostController -> anyReleased -> WAITING
+			|anyReleased -> RELEASED).

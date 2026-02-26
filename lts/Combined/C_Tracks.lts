@@ -1,0 +1,109 @@
+range AXIS = -1..1		// AXIS will become an integer of 10 * (axisvalue + 0.05) or 10 * (axisvalue - 0.05) when negative
+range DEG = 0..7		// this becomes a multiple of 45
+range POS_AXIS = 0..1
+range POS_AXIS_NOT_ZERO = 1..1
+
+MODE = OFF,
+OFF = (foundController -> CONTROL),
+CONTROL =	(lostController -> trackReset -> turretReset -> trackResetCheck -> turretResetCheck -> OFF
+			|crossPressed -> trackReset -> trackResetCheck -> startFollow -> FOLLOW
+			|getLeftXvalue[v:AXIS] -> CONTROL
+			|getLeftYvalue[v:AXIS] -> CONTROL
+			|getRightXvalue[v:AXIS] -> CONTROL
+			),
+FOLLOW =	(lostController -> trackReset -> turretReset -> trackResetCheck -> turretResetCheck -> OFF
+			|crossPressed -> stopFollow -> CONTROL
+			|getRightXvalue[v:AXIS] -> FOLLOW
+			).
+
+LEFT_STICK_X = LEFT_STICK_X[0],
+LEFT_STICK_X[c:AXIS] =	(getLeftXvalue[v:AXIS] -> DECIDE[c][v]
+						|setLeftXvalue[c] -> LEFT_STICK_X[c] // in case y did change
+						),
+DECIDE[c:AXIS][v:AXIS] =	(when (c != v) setLeftXvalue[v] -> LEFT_STICK_X[v]
+							|when (c == v) leftXdoNothing -> LEFT_STICK_X[c]
+							).
+
+LEFT_STICK_Y = LEFT_STICK_Y[0],
+LEFT_STICK_Y[c:AXIS] =	(getLeftYvalue[v:AXIS] -> DECIDE[c][v]
+						|setLeftYvalue[c] -> LEFT_STICK_Y[c] // in case x did change
+						),
+DECIDE[c:AXIS][v:AXIS] =	(when (c != v) setLeftYvalue[v] -> LEFT_STICK_Y[v]
+							|when (c == v) leftYdoNothing -> LEFT_STICK_Y[c]
+							).
+
+LEFT_STICK_PERCENTAGE = WAITING,
+WAITING =	(setLeftXvalue[x:AXIS] -> setLeftYvalue[y:AXIS] -> DECIDE[x][y]
+			|setLeftYvalue[y:AXIS] -> setLeftXvalue[x:AXIS] -> DECIDE[x][y]
+			|trackReset -> leftStickNoPercentage -> trackSpeedCheck -> trackResetCheck -> WAITING
+			),
+DECIDE[x:AXIS][y:AXIS] =	(when(x == 0 && y == 0) leftStickNoPercentage -> trackSpeedCheck -> WAITING
+							|when(x == 0 && y == -1) leftStickPercentage[1] -> trackSpeedCheck -> WAITING
+							|when(x == 1 && y == -1) leftStickPercentage[1] -> trackSpeedCheck -> WAITING
+							|when(x == 1 && y == 0) leftStickPercentage[1] -> trackSpeedCheck -> WAITING
+							|when(x == 1 && y == 1) leftStickPercentage[1] -> trackSpeedCheck -> WAITING
+							|when(x == 0 && y == 1) leftStickPercentage[1] -> trackSpeedCheck -> WAITING
+							|when(x == -1 && y == 1) leftStickPercentage[1] -> trackSpeedCheck -> WAITING
+							|when(x == -1 && y == 0) leftStickPercentage[1] -> trackSpeedCheck -> WAITING
+							|when(x == -1 && y == -1) leftStickPercentage[1] -> trackSpeedCheck -> WAITING
+							).
+
+TRACKS_SPEED = WAITING,
+WAITING = 	(leftStickNoPercentage -> NOTUSED
+			|leftStickPercentage[v:POS_AXIS_NOT_ZERO] -> USED[v]),
+NOTUSED = (setLeftTrackWanted[0] -> setRightTrackWanted[0] -> trackSpeedCheck -> WAITING),
+USED[v:POS_AXIS_NOT_ZERO] = (setLeftTrackWanted[v] -> setRightTrackWanted[v] -> trackSpeedCheck -> WAITING).
+
+
+LEFT_STICK_DEGREE = WAITING,
+WAITING =	(setLeftXvalue[x:AXIS] -> setLeftYvalue[y:AXIS] -> DECIDE[x][y]
+			|setLeftYvalue[y:AXIS] -> setLeftXvalue[x:AXIS] -> DECIDE[x][y]
+			|trackReset -> leftStickNoDegree -> trackCheck -> trackResetCheck -> WAITING
+			),
+DECIDE[x:AXIS][y:AXIS] = 	(when(x == 0 && y == 0) leftStickNoDegree -> trackCheck -> WAITING
+							|when(x == 0 && y == -1) leftStickDegree[0] -> trackCheck -> WAITING
+							|when(x == 1 && y == -1) leftStickDegree[1] -> trackCheck -> WAITING
+							|when(x == 1 && y == 0) leftStickDegree[2] -> trackCheck -> WAITING
+							|when(x == 1 && y == 1) leftStickDegree[3] -> trackCheck -> WAITING
+							|when(x == 0 && y == 1) leftStickDegree[4] -> trackCheck -> WAITING
+							|when(x == -1 && y == 1) leftStickDegree[5] -> trackCheck -> WAITING
+							|when(x == -1 && y == 0) leftStickDegree[6] -> trackCheck -> WAITING
+							|when(x == -1 && y == -1) leftStickDegree[7] -> trackCheck -> WAITING
+							).
+
+LEFT_STICK_DIRECTION = WAITING,
+WAITING =	(leftStickNoDegree -> HALT
+			|leftStickDegree[v:DEG] -> DECIDE[v]
+			),
+DECIDE[v:DEG] =	(when (v == 0) trackForward -> trackCheck -> WAITING
+				|when (v == 1) trackRight -> trackCheck -> WAITING
+				|when (v == 2) trackRotateRight -> trackCheck -> WAITING
+				|when (v == 3) trackRightBack -> trackCheck -> WAITING
+				|when (v == 4) trackBackward -> trackCheck -> WAITING
+				|when (v == 5) trackLeftBack -> trackCheck -> WAITING
+				|when (v == 6) trackRotateLeft -> trackCheck -> WAITING
+				|when (v == 7) trackLeft -> trackCheck -> WAITING
+				),
+HALT = (trackStop -> trackCheck -> WAITING).
+
+TRACKS_DIRECTION = WAITING,
+WAITING = 			(trackForward -> FORWARD
+					|trackBackward -> BACKWARD
+					|trackLeft -> LEFT
+					|trackLeftBack -> LEFTBACK
+					|trackRight -> RIGHT
+					|trackRightBack -> RIGHTBACK
+					|trackRotateLeft -> ROTATELEFT
+					|trackRotateRight -> ROTATERIGHT
+					|trackStop -> HALT
+					),
+FORWARD = (leftTrackForward -> rightTrackForward -> trackCheck -> WAITING),
+BACKWARD = (leftTrackBackward -> rightTrackBackward -> trackCheck -> WAITING),
+LEFT = (leftTrackStop -> rightTrackForward -> trackCheck -> WAITING),
+LEFTBACK = (leftTrackStop -> rightTrackBackward -> trackCheck -> WAITING),
+RIGHT = (leftTrackForward -> rightTrackStop -> trackCheck -> WAITING),
+RIGHTBACK = (leftTrackBackward -> rightTrackStop -> trackCheck -> WAITING),
+ROTATELEFT = (leftTrackBackward -> rightTrackForward -> trackCheck -> WAITING),
+ROTATERIGHT = (leftTrackForward -> rightTrackBackward -> trackCheck -> WAITING),
+HALT = (leftTrackStop -> rightTrackStop -> trackCheck -> WAITING).
+

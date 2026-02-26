@@ -1,0 +1,12 @@
+MODE = OFF,
+OFF = (foundController -> CONTROL),
+CONTROL =	(lostController -> trackReset -> turretReset -> trackResetCheck -> turretResetCheck -> OFF
+			|crossPressed -> trackReset -> trackResetCheck -> startFollow -> FOLLOW
+			|getLeftXvalue[v:AXIS] -> CONTROL
+			|getLeftYvalue[v:AXIS] -> CONTROL
+			|getRightXvalue[v:AXIS] -> CONTROL
+			),
+FOLLOW =	(lostController -> trackReset -> turretReset -> trackResetCheck -> turretResetCheck -> OFF
+			|crossPressed -> stopFollow -> CONTROL
+			|getRightXvalue[v:AXIS] -> FOLLOW
+			).

@@ -1,0 +1,20 @@
+range AMOUNT = 1..5 // no matter what the amount is in real world (as long as it is not more than the max of an integer)
+
+LED2 = LED2OFF,
+LED2OFF = 		(leftStickDegree -> setLED2on -> LED2ON[1]
+				|leftStickPercentage -> setLED2on -> LED2ON[1]
+				|rightStickUsed -> setLED2on -> LED2ON[1]
+				|anyButtonPressed -> setLED2on -> LED2ON[1]
+				),
+LED2ON[c:AMOUNT] = 	(when (c < 5) leftStickDegree -> LED2ON[c+1]
+					|when (c < 5) leftStickPercentage -> LED2ON[c+1]
+					|when (c < 5) rightStickUsed -> LED2ON[c+1]
+					|when (c < 5) anyButtonPressed -> LED2ON[c+1]
+					|leftStickNoDegree -> ONEEVENTLESS[c]
+					|leftStickNoPercentage -> ONEEVENTLESS[c]
+					|rightStickNotUsed -> ONEEVENTLESS[c]
+					|anyButtonReleased -> ONEEVENTLESS[c]
+					),
+ONEEVENTLESS[c:AMOUNT] = 	(when (c == 1) setLED2off -> LED2OFF
+							|when (c > 1) eventLess -> LED2ON[c-1]
+							).

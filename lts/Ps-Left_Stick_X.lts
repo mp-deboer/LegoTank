@@ -1,0 +1,9 @@
+range AXIS = -1..1		// AXIS will become an integer of 10 * (axisvalue + 0.05) or 10 * (axisvalue - 0.05) when negative
+
+LEFT_STICK_X = LEFT_STICK_X[0],
+LEFT_STICK_X[c:AXIS] =	(getLeftXvalue[v:AXIS] -> DECIDE[c][v]
+						|setLeftXvalue[c] -> LEFT_STICK_X[c] // in case y did change
+						),
+DECIDE[c:AXIS][v:AXIS] =	(when (c != v) setLeftXvalue[v] -> LEFT_STICK_X[v]
+							|when (c == v) leftXdoNothing -> LEFT_STICK_X[c]
+							).

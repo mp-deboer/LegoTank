@@ -1,0 +1,20 @@
+TRACKS_DIRECTION = WAITING,
+WAITING = 			(trackForward -> FORWARD
+					|trackBackward -> BACKWARD
+					|trackLeft -> LEFT
+					|trackLeftBack -> LEFTBACK
+					|trackRight -> RIGHT
+					|trackRightBack -> RIGHTBACK
+					|trackRotateLeft -> ROTATELEFT
+					|trackRotateRight -> ROTATERIGHT
+					|trackStop -> HALT
+					),
+FORWARD = (leftTrackForward -> rightTrackForward -> trackCheck -> WAITING),
+BACKWARD = (leftTrackBackward -> rightTrackBackward -> trackCheck -> WAITING),
+LEFT = (leftTrackStop -> rightTrackForward -> trackCheck -> WAITING),
+LEFTBACK = (leftTrackStop -> rightTrackBackward -> trackCheck -> WAITING),
+RIGHT = (leftTrackForward -> rightTrackStop -> trackCheck -> WAITING),
+RIGHTBACK = (leftTrackBackward -> rightTrackStop -> trackCheck -> WAITING),
+ROTATELEFT = (leftTrackBackward -> rightTrackForward -> trackCheck -> WAITING),
+ROTATERIGHT = (leftTrackForward -> rightTrackBackward -> trackCheck -> WAITING),
+HALT = (leftTrackStop -> rightTrackStop -> trackCheck -> WAITING).

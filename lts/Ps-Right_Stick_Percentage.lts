@@ -1,0 +1,9 @@
+range AXIS = -1..1			// AXIS will become an integer of 10 * (axisvalue + 0.05) or 10 * (axisvalue - 0.05) when negative
+
+RIGHT_STICK_PERCENTAGE = WAITING,
+WAITING = 	(setRightXvalue[i:AXIS] -> DECIDE[i]
+			|turretReset -> rightStickNotUsed -> turretCheck -> turretSpeedCheck -> turretResetCheck -> WAITING),
+DECIDE[i:AXIS] =	(when (i == 0) rightStickNotUsed -> turretCheck -> turretSpeedCheck -> WAITING
+					|when (i == -1) rightStickUsed[0] -> turretCheck -> turretSpeedCheck -> WAITING
+					|when (i == 1) rightStickUsed[1] -> turretCheck -> turretSpeedCheck -> WAITING
+					).

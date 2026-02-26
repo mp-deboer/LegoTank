@@ -1,0 +1,290 @@
+range SPEED = -1..1 // -100 to 100
+range PERC = 0..1
+range AXIS = -1..1			// AXIS will become an integer of 10 * (axisvalue + 0.05) or 10 * (axisvalue - 0.05) when negative
+range AXIS_NOT_ZERO = 0..1 	//0 means -1
+range POS_AXIS = 0..1		// POS_AXIS (positive) will become an integer of 10 * (axisvalue + 0.05)
+range POS_AXIS_NOT_ZERO = 1..1
+range DEG = 0..7		// this becomes a multiple of 45
+range AMOUNT = 1..5
+
+HARDWAREDRIVER =	(setLeftTrackSpeed[v:SPEED] -> HARDWAREDRIVER
+					|setRightTrackSpeed[v:SPEED] -> HARDWAREDRIVER
+					|setTurretSpeed[v:SPEED] -> HARDWAREDRIVER
+					|toggleLED1 -> HARDWAREDRIVER
+					|toggleLED2 -> HARDWAREDRIVER
+					|setLED1on -> HARDWAREDRIVER
+					|setLED1off -> HARDWAREDRIVER
+					|setLED2on -> HARDWAREDRIVER
+					|setLED2off -> HARDWAREDRIVER
+					).
+
+
+MODE = OFF,
+OFF = (foundController -> CONTROL),
+CONTROL =	(lostController -> trackReset -> turretReset -> trackResetCheck -> turretResetCheck -> OFF
+			|crossPressed -> trackReset -> trackResetCheck -> startFollow -> FOLLOW
+			|getLeftXvalue[v:AXIS] -> CONTROL
+			|getLeftYvalue[v:AXIS] -> CONTROL
+			|getRightXvalue[v:AXIS] -> CONTROL
+			),
+FOLLOW =	(lostController -> trackReset -> turretReset -> trackResetCheck -> turretResetCheck -> OFF
+			|crossPressed -> stopFollow -> CONTROL
+			|getRightXvalue[v:AXIS] -> FOLLOW
+			).
+
+
+CONTROLLER = DISCONNECTED,
+DISCONNECTED = (foundController -> CONNECTED),
+CONNECTED = (lostController -> DISCONNECTED).
+
+
+TRACKS_DIRECTION = WAITING,
+WAITING = 			(trackForward -> FORWARD
+					|trackBackward -> BACKWARD
+					|trackLeft -> LEFT
+					|trackLeftBack -> LEFTBACK
+					|trackRight -> RIGHT
+					|trackRightBack -> RIGHTBACK
+					|trackRotateLeft -> ROTATELEFT
+					|trackRotateRight -> ROTATERIGHT
+					|trackStop -> HALT
+					),
+FORWARD = (leftTrackForward -> rightTrackForward -> trackCheck -> WAITING),
+BACKWARD = (leftTrackBackward -> rightTrackBackward -> trackCheck -> WAITING),
+LEFT = (leftTrackStop -> rightTrackForward -> trackCheck -> WAITING),
+LEFTBACK = (leftTrackStop -> rightTrackBackward -> trackCheck -> WAITING),
+RIGHT = (leftTrackForward -> rightTrackStop -> trackCheck -> WAITING),
+RIGHTBACK = (leftTrackBackward -> rightTrackStop -> trackCheck -> WAITING),
+ROTATELEFT = (leftTrackBackward -> rightTrackForward -> trackCheck -> WAITING),
+ROTATERIGHT = (leftTrackForward -> rightTrackBackward -> trackCheck -> WAITING),
+HALT = (leftTrackStop -> rightTrackStop -> trackCheck -> WAITING).
+
+
+MOTOR_LEFTTRACK = HALT[0],
+HALT[w:PERC] =	(leftTrackForward -> GOINGFORWARD[0][w]
+				|leftTrackBackward -> GOINGBACKWARD[0][w]
+				|leftTrackStop -> HALT[w]
+				|setLeftTrackWanted[s:PERC] -> HALT[s]
+				),
+// c = current speed, w = wanted speed
+GOINGFORWARD[c:PERC][w:PERC] = (when (c+10 < w) leftTrackAccelerate -> GOINGFORWARD[c+10][w]
+							|when (c < w && c+10 > w) leftTrackFinalAccelerate -> GOINGFORWARD[w][w]
+							|when (c-10 > w) leftTrackDecelerate -> GOINGFORWARD[c-10][w]
+							|when (c > w && c-10 < w) leftTrackFinalDecelerate -> GOINGFORWARD[w][w]
+							|when (c == 0) leftTrackStop -> HALT[w]					// the event is not cleared until it is reached,
+							|when (c > 0) leftTrackStop -> GOINGFORWARD[c][0]		// so when GOINGFORWARD[0] is reached, it will see it must stop
+							|when (c == 0) leftTrackBackward -> GOINGBACKWARD[c][w]
+							|when (c > 0) leftTrackBackward -> GOINGFORWARD[c][0] 	// and here when GOINGFORWARD[0] is reached, it will see it must go right.
+							|leftTrackForward -> GOINGFORWARD[c][w]					// It is allowed to change your mind,
+																					//   when the direction becomes left again, it will accelerate back
+							|setLeftTrackWanted[s:PERC] -> GOINGFORWARD[c][s]		// <- warning, in check -> run, this will ruin the deceleration when leftTrackBackward was given
+																					// normally the event gets stored, and the speed gets stored, and the proces will work to it
+							),
+GOINGBACKWARD[c:PERC][w:PERC] = (when (c+10 < w) leftTrackAccelerate -> GOINGBACKWARD[c+10][w]
+							|when (c < w && c+10 > w) leftTrackFinalAccelerate -> GOINGBACKWARD[w][w]
+							|when (c-10 > w) leftTrackDecelerate -> GOINGBACKWARD[c-10][w]
+							|when (c > w && c-10 < w) leftTrackFinalDecelerate -> GOINGBACKWARD[w][w]
+							|when (c == 0) leftTrackStop -> HALT[w]
+							|when (c > 0) leftTrackStop -> GOINGBACKWARD[c][0]
+							|when (c == 0) leftTrackForward -> GOINGFORWARD[c][w]
+							|when (c > 0) leftTrackForward -> GOINGBACKWARD[c][0]
+							|leftTrackBackward -> GOINGBACKWARD[c][w]
+							|setLeftTrackWanted[s:PERC] -> GOINGBACKWARD[c][s]
+							).
+
+
+
+MOTOR_RIGHTTRACK = HALT[0],
+HALT[w:PERC] =	(rightTrackForward -> GOINGFORWARD[0][w]
+				|rightTrackBackward -> GOINGBACKWARD[0][w]
+				|rightTrackStop -> HALT[w]
+				|setRightTrackWanted[s:PERC] -> HALT[s]
+				),
+// c = current speed, w = wanted speed
+GOINGFORWARD[c:PERC][w:PERC] = (when (c+10 < w) rightTrackAccelerate -> GOINGFORWARD[c+10][w]
+							|when (c < w && c+10 > w) rightTrackFinalAccelerate -> GOINGFORWARD[w][w]
+							|when (c-10 > w) rightTrackDecelerate -> GOINGFORWARD[c-10][w]
+							|when (c > w && c-10 < w) rightTrackFinalDecelerate -> GOINGFORWARD[w][w]
+							|when (c == 0) rightTrackStop -> HALT[w]				// the event is not cleared until it is reached,
+							|when (c > 0) rightTrackStop -> GOINGFORWARD[c][0]		// so when GOINGFORWARD[0] is reached, it will see it must stop
+							|when (c == 0) rightTrackBackward -> GOINGBACKWARD[c][w]
+							|when (c > 0) rightTrackBackward -> GOINGFORWARD[c][0]	// and here when GOINGFORWARD[0] is reached, it will see it must go right.
+							|rightTrackForward -> GOINGFORWARD[c][w]				// It is allowed to change your mind,
+																					//   when the direction becomes left again, it will accelerate back
+							|setRightTrackWanted[s:PERC] -> GOINGFORWARD[c][s]		// <- warning, in check -> run, this will ruin the deceleration when rightTrackBackward was given
+																					// normally the event gets stored, and the speed gets stored, and the proces will work to it
+							),
+GOINGBACKWARD[c:PERC][w:PERC] = (when (c+10 < w) rightTrackAccelerate -> GOINGBACKWARD[c+10][w]
+							|when (c < w && c+10 > w) rightTrackFinalAccelerate -> GOINGBACKWARD[w][w]
+							|when (c-10 > w) rightTrackDecelerate -> GOINGBACKWARD[c-10][w]
+							|when (c > w && c-10 < w) rightTrackFinalDecelerate -> GOINGBACKWARD[w][w]
+							|when (c == 0) rightTrackStop -> HALT[w]
+							|when (c > 0) rightTrackStop -> GOINGBACKWARD[c][0]
+							|when (c == 0) rightTrackForward -> GOINGFORWARD[c][w]
+							|when (c > 0) rightTrackForward -> GOINGBACKWARD[c][0]
+							|rightTrackBackward -> GOINGBACKWARD[c][w]
+							|setRightTrackWanted[s:PERC] -> GOINGBACKWARD[c][s]
+							).
+
+// When the X-axis has changed at least 1 in comparison with the previous value, fire event
+RIGHT_STICK_X = RIGHT_STICK_X[0],
+RIGHT_STICK_X[c:AXIS] =	(getRightXvalue[v:AXIS] -> DECIDE[c][v]),
+DECIDE[c:AXIS][v:AXIS] =	(when (c != v) setRightXvalue[v] -> RIGHT_STICK_X[v]
+							|when (c == v) rightStickDoNothing -> RIGHT_STICK_X[c]
+							).
+
+
+RIGHT_STICK_PERCENTAGE = WAITING,
+WAITING = 	(setRightXvalue[i:AXIS] -> DECIDE[i]
+			|turretReset -> rightStickNotUsed -> turretCheck -> turretSpeedCheck -> turretResetCheck -> WAITING),
+DECIDE[i:AXIS] =	(when (i == 0) rightStickNotUsed -> turretCheck -> turretSpeedCheck -> WAITING
+					|when (i == -1) rightStickUsed[0] -> turretCheck -> turretSpeedCheck -> WAITING
+					|when (i == 1) rightStickUsed[1] -> turretCheck -> turretSpeedCheck -> WAITING
+					).
+
+
+RIGHT_STICK_DIRECTION = WAITING,
+WAITING = 	(rightStickNotUsed -> HALT
+			|rightStickUsed[v:AXIS_NOT_ZERO] -> DECIDE[v]),
+DECIDE[v:AXIS_NOT_ZERO] = 	(when (v == 0) turretLeft -> turretCheck -> WAITING
+							|when (v == 1) turretRight -> turretCheck -> WAITING
+							),
+HALT = (turretStop -> turretCheck -> WAITING).
+
+
+TURRET_SPEED = WAITING,
+WAITING = 	(rightStickNotUsed -> HALT
+			|rightStickUsed[d:AXIS_NOT_ZERO] -> MOVE[d]
+			),
+HALT = (setTurretWanted[0] -> turretSpeedCheck -> WAITING),
+MOVE[d:AXIS_NOT_ZERO] = (when (d == 0) setTurretWanted[d*-1] -> turretSpeedCheck -> WAITING // when axis = -1, d*-1 = 1
+						|when (d == 1) setTurretWanted[d] -> turretSpeedCheck -> WAITING
+						).
+
+
+MOTOR_TURRET = HALT[0],
+HALT[w:PERC] =	(turretLeft -> GOINGLEFT[0][w]
+				|turretRight -> GOINGRIGHT[0][w]
+				|turretStop -> HALT[w]
+				|setTurretWanted[s:PERC] -> HALT[s]
+				),
+// c = current speed, w = wanted speed
+GOINGLEFT[c:PERC][w:PERC] = (when (c+10 < w) turretAccelerate -> GOINGLEFT[c+10][w]
+							|when (c < w && c+10 > w) turretFinalAccelerate -> GOINGLEFT[w][w]
+							|when (c-10 > w) turretDecelerate -> GOINGLEFT[c-10][w]
+							|when (c > w && c-10 < w) turretFinalDecelerate -> GOINGLEFT[w][w]
+							|when (c == 0) turretStop -> HALT[w]		// the event is not cleared until it is reached,
+							|when (c > 0) turretStop -> GOINGLEFT[c][0]	// so when GOINGLEFT[0] is reached, it will see it must stop
+							|when (c == 0) turretRight -> GOINGRIGHT[c][w]
+							|when (c > 0) turretRight -> GOINGLEFT[c][0] // and here when GOINGLEFT[0] is reached, it will see it must go right.
+							|turretLeft -> GOINGLEFT[c][w]				// It is allowed to change your mind,
+																		//   when the direction becomes left again, it will accelerate back
+							|setTurretWanted[s:PERC] -> GOINGLEFT[c][s]	// <- warning, in check -> run, this will ruin the deceleration when turretRight was given
+																		// normally the event gets stored, and the speed gets stored, and the proces will work to it
+							),
+GOINGRIGHT[c:PERC][w:PERC] = (when (c+10 < w) turretAccelerate -> GOINGRIGHT[c+10][w]
+							|when (c < w && c+10 > w) turretFinalAccelerate -> GOINGRIGHT[w][w]
+							|when (c-10 > w) turretDecelerate -> GOINGRIGHT[c-10][w]
+							|when (c > w && c-10 < w) turretFinalDecelerate -> GOINGRIGHT[w][w]
+							|when (c == 0) turretStop -> HALT[w]
+							|when (c > 0) turretStop -> GOINGRIGHT[c][0]
+							|when (c == 0) turretLeft -> GOINGLEFT[c][w]
+							|when (c > 0) turretLeft -> GOINGRIGHT[c][0]
+							|turretRight -> GOINGRIGHT[c][w]
+							|setTurretWanted[s:PERC] -> GOINGRIGHT[c][s]
+							).
+
+
+LEFT_STICK_X = LEFT_STICK_X[0],
+LEFT_STICK_X[c:AXIS] =	(getLeftXvalue[v:AXIS] -> DECIDE[c][v]
+						|setLeftXvalue[c] -> LEFT_STICK_X[c] // in case y did change
+						),
+DECIDE[c:AXIS][v:AXIS] =	(when (c != v) setLeftXvalue[v] -> LEFT_STICK_X[v]
+							|when (c == v) leftXdoNothing -> LEFT_STICK_X[c]
+							).
+
+
+LEFT_STICK_Y = LEFT_STICK_Y[0],
+LEFT_STICK_Y[c:AXIS] =	(getLeftYvalue[v:AXIS] -> DECIDE[c][v]
+						|setLeftYvalue[c] -> LEFT_STICK_Y[c] // in case x did change
+						),
+DECIDE[c:AXIS][v:AXIS] =	(when (c != v) setLeftYvalue[v] -> LEFT_STICK_Y[v]
+							|when (c == v) leftYdoNothing -> LEFT_STICK_Y[c]
+							).
+
+
+LEFT_STICK_DEGREE = WAITING,
+WAITING =	(setLeftXvalue[x:AXIS] -> setLeftYvalue[y:AXIS] -> DECIDE[x][y]
+			|setLeftYvalue[y:AXIS] -> setLeftXvalue[x:AXIS] -> DECIDE[x][y]
+			|trackReset -> leftStickNoDegree -> trackCheck -> trackResetCheck -> WAITING
+			),
+DECIDE[x:AXIS][y:AXIS] = 	(when(x == 0 && y == 0) leftStickNoDegree -> trackCheck -> WAITING
+							|when(x == 0 && y == -1) leftStickDegree[0] -> trackCheck -> WAITING
+							|when(x == 1 && y == -1) leftStickDegree[1] -> trackCheck -> WAITING
+							|when(x == 1 && y == 0) leftStickDegree[2] -> trackCheck -> WAITING
+							|when(x == 1 && y == 1) leftStickDegree[3] -> trackCheck -> WAITING
+							|when(x == 0 && y == 1) leftStickDegree[4] -> trackCheck -> WAITING
+							|when(x == -1 && y == 1) leftStickDegree[5] -> trackCheck -> WAITING
+							|when(x == -1 && y == 0) leftStickDegree[6] -> trackCheck -> WAITING
+							|when(x == -1 && y == -1) leftStickDegree[7] -> trackCheck -> WAITING
+							).
+
+
+LEFT_STICK_DIRECTION = WAITING,
+WAITING =	(leftStickNoDegree -> HALT
+			|leftStickDegree[v:DEG] -> DECIDE[v]
+			),
+DECIDE[v:DEG] =	(when (v == 0) trackForward -> trackCheck -> WAITING
+				|when (v == 1) trackRight -> trackCheck -> WAITING
+				|when (v == 2) trackRotateRight -> trackCheck -> WAITING
+				|when (v == 3) trackRightBack -> trackCheck -> WAITING
+				|when (v == 4) trackBackward -> trackCheck -> WAITING
+				|when (v == 5) trackLeftBack -> trackCheck -> WAITING
+				|when (v == 6) trackRotateLeft -> trackCheck -> WAITING
+				|when (v == 7) trackLeft -> trackCheck -> WAITING
+				),
+HALT = (trackStop -> trackCheck -> WAITING).
+
+
+LED2 = LED2OFF,
+LED2OFF = 		(leftStickDegree -> setLED2on -> LED2ON[1]
+				|leftStickPercentage -> setLED2on -> LED2ON[1]
+				|rightStickUsed -> setLED2on -> LED2ON[1]
+				|anyButtonPressed -> setLED2on -> LED2ON[1]
+				),
+LED2ON[c:AMOUNT] = 	(when (c < 5) leftStickDegree -> LED2ON[c+1]
+					|when (c < 5) leftStickPercentage -> LED2ON[c+1]
+					|when (c < 5) rightStickUsed -> LED2ON[c+1]
+					|when (c < 5) anyButtonPressed -> LED2ON[c+1]
+					|leftStickNoDegree -> ONEEVENTLESS[c]
+					|leftStickNoPercentage -> ONEEVENTLESS[c]
+					|rightStickNotUsed -> ONEEVENTLESS[c]
+					|anyButtonReleased -> ONEEVENTLESS[c]
+					),
+ONEEVENTLESS[c:AMOUNT] = 	(when (c == 1) setLED2off -> LED2OFF
+							|when (c > 1) eventLess -> LED2ON[c-1]
+							).
+
+							
+LEFT_STICK_PERCENTAGE = WAITING,
+WAITING =	(setLeftXvalue[x:AXIS] -> setLeftYvalue[y:AXIS] -> DECIDE[x][y]
+			|setLeftYvalue[y:AXIS] -> setLeftXvalue[x:AXIS] -> DECIDE[x][y]
+			|trackReset -> leftStickNoPercentage -> trackSpeedCheck -> trackResetCheck -> WAITING
+			),
+DECIDE[x:AXIS][y:AXIS] =	(when(x == 0 && y == 0) leftStickNoPercentage -> trackSpeedCheck -> WAITING
+							|when(x == 0 && y == -1) leftStickPercentage[1] -> trackSpeedCheck -> WAITING
+							|when(x == 1 && y == -1) leftStickPercentage[1] -> trackSpeedCheck -> WAITING
+							|when(x == 1 && y == 0) leftStickPercentage[1] -> trackSpeedCheck -> WAITING
+							|when(x == 1 && y == 1) leftStickPercentage[1] -> trackSpeedCheck -> WAITING
+							|when(x == 0 && y == 1) leftStickPercentage[1] -> trackSpeedCheck -> WAITING
+							|when(x == -1 && y == 1) leftStickPercentage[1] -> trackSpeedCheck -> WAITING
+							|when(x == -1 && y == 0) leftStickPercentage[1] -> trackSpeedCheck -> WAITING
+							|when(x == -1 && y == -1) leftStickPercentage[1] -> trackSpeedCheck -> WAITING
+							).
+							
+							
+TRACKS_SPEED = WAITING,
+WAITING = 	(leftStickNoPercentage -> NOTUSED
+			|leftStickPercentage[v:POS_AXIS_NOT_ZERO] -> USED[v]),
+NOTUSED = (setLeftTrackWanted[0] -> setRightTrackWanted[0] -> trackSpeedCheck -> WAITING),
+USED[v:POS_AXIS_NOT_ZERO] = (setLeftTrackWanted[v] -> setRightTrackWanted[v] -> trackSpeedCheck -> WAITING).

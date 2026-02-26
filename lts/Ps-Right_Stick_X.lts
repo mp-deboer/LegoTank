@@ -1,0 +1,8 @@
+range AXIS = -1..1			// AXIS will become an integer of 10 * (axisvalue + 0.05) or 10 * (axisvalue - 0.05) when negative
+
+// When the X-axis has changed at least 1 in comparison with the previous value, fire event
+RIGHT_STICK_X = RIGHT_STICK_X[0],
+RIGHT_STICK_X[c:AXIS] =	(getRightXvalue[v:AXIS] -> DECIDE[c][v]),
+DECIDE[c:AXIS][v:AXIS] =	(when (c != v) setRightXvalue[v] -> RIGHT_STICK_X[v]
+							|when (c == v) rightStickDoNothing -> RIGHT_STICK_X[c]
+							).

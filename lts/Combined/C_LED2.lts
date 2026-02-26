@@ -1,0 +1,85 @@
+range SPEED = -1..1 // -100 to 100
+range VALUE = 0..1 // 0 to 255
+range PERC = 0..1
+range COLOR = 0..1
+range AXIS = -1..1			// AXIS will become an integer of 10 * (axisvalue + 0.05) or 10 * (axisvalue - 0.05) when negative
+range AXIS_NOT_ZERO = 0..1 	//0 means -1
+range POS_AXIS = 0..1		// POS_AXIS (positive) will become an integer of 10 * (axisvalue + 0.05)
+range DEG = 0..7		// this becomes a multiple of 45
+range AMOUNT = 1..5
+
+
+LED2 = LED2OFF,
+LED2OFF = 		(leftStickUsed -> setLED2on -> LED2ON[1]
+				|r2Used -> setLED2on -> LED2ON[1]
+				|rightStickUsed -> setLED2on -> LED2ON[1]
+				|anyButtonPressed -> setLED2on -> LED2ON[1]
+				),
+LED2ON[c:AMOUNT] = 	(when (c < 5) leftStickUsed -> LED2ON[c+1]
+					|when (c < 5) r2Used -> LED2ON[c+1]
+					|when (c < 5) rightStickUsed -> LED2ON[c+1]
+					|when (c < 5) anyButtonPressed -> LED2ON[c+1]
+					|leftStickNotUsed -> ONEEVENTLESS[c]
+					|r2NotUsed -> ONEEVENTLESS[c]
+					|rightStickNotUsed -> ONEEVENTLESS[c]
+//					|anyButtonReleased -> ONEEVENTLESS[c]
+					),
+ONEEVENTLESS[c:AMOUNT] = 	(when (c == 1) setLED2off -> LED2OFF
+							|when (c > 1) eventLess -> LED2ON[c-1]
+							).
+
+
+LEFT_STICK_X = LEFT_STICK_X[0],
+LEFT_STICK_X[c:AXIS] =	(getLeftXvalue[v:AXIS] -> DECIDE[c][v]
+						|setLeftXvalue[c] -> LEFT_STICK_X[c] // in case y did change
+						),
+DECIDE[c:AXIS][v:AXIS] =	(when (c != v) setLeftXvalue[v] -> LEFT_STICK_X[v]
+							|when (c == v) leftXdoNothing -> LEFT_STICK_X[c]
+							).
+
+
+LEFT_STICK_Y = LEFT_STICK_Y[0],
+LEFT_STICK_Y[c:AXIS] =	(getLeftYvalue[v:AXIS] -> DECIDE[c][v]
+						|setLeftYvalue[c] -> LEFT_STICK_Y[c] // in case x did change
+						),
+DECIDE[c:AXIS][v:AXIS] =	(when (c != v) setLeftYvalue[v] -> LEFT_STICK_Y[v]
+							|when (c == v) leftYdoNothing -> LEFT_STICK_Y[c]
+							).
+
+
+LEFT_STICK_DEGREE = WAITING,
+WAITING =	(setLeftXvalue[x:AXIS] -> setLeftYvalue[y:AXIS] -> DECIDE[x][y]
+			|setLeftYvalue[y:AXIS] -> setLeftXvalue[x:AXIS] -> DECIDE[x][y]
+			),
+DECIDE[x:AXIS][y:AXIS] = 	(when(x == 0 && y == 0) leftStickNotUsed -> trackCheck -> WAITING
+							|when(x == 0 && y == -1) leftStickUsed[0] -> trackCheck -> WAITING
+							|when(x == 1 && y == -1) leftStickUsed[1] -> trackCheck -> WAITING
+							|when(x == 1 && y == 0) leftStickUsed[2] -> trackCheck -> WAITING
+							|when(x == 1 && y == 1) leftStickUsed[3] -> trackCheck -> WAITING
+							|when(x == 0 && y == 1) leftStickUsed[4] -> trackCheck -> WAITING
+							|when(x == -1 && y == 1) leftStickUsed[5] -> trackCheck -> WAITING
+							|when(x == -1 && y == 0) leftStickUsed[6] -> trackCheck -> WAITING
+							|when(x == -1 && y == -1) leftStickUsed[7] -> trackCheck -> WAITING
+							).
+
+
+RIGHT_STICK_PERCENTAGE = WAITING,
+WAITING = 	(setRightXvalue[i:AXIS] -> DECIDE[i]),
+DECIDE[i:AXIS] =	(when (i == 0) rightStickNotUsed -> turretCheck -> WAITING
+					|when (i == -1) rightStickUsed[0] -> turretCheck -> WAITING
+					|when (i == 1) rightStickUsed[1] -> turretCheck -> WAITING
+					).
+
+
+R2_AXIS = R2_AXIS[0],
+R2_AXIS[c:POS_AXIS] =	(getR2value[v:POS_AXIS] -> DECIDE[c][v]),
+DECIDE[c:POS_AXIS][v:POS_AXIS] =	(when (c != v) setR2value[v] -> R2_AXIS[v]
+									|when (c == v) r2DoNothing -> R2_AXIS[c]
+									).
+
+
+R2_PERCENTAGE = WAITING,
+WAITING = 	(setR2value[v:POS_AXIS] -> DECIDE[v]),
+DECIDE[v:POS_AXIS] =	(when (v == 0) r2NotUsed -> trackSpeedCheck -> WAITING
+						|when (v == 1) r2Used[v] -> trackSpeedCheck -> WAITING
+						).

@@ -1,0 +1,16 @@
+range DEG = 0..7		// this becomes a multiple of 45
+
+LEFT_STICK_DIRECTION = WAITING,
+WAITING =	(leftStickNoDegree -> HALT
+			|leftStickDegree[v:DEG] -> DECIDE[v]
+			),
+DECIDE[v:DEG] =	(when (v == 0) trackForward -> trackCheck -> WAITING
+				|when (v == 1) trackRight -> trackCheck -> WAITING
+				|when (v == 2) trackRotateRight -> trackCheck -> WAITING
+				|when (v == 3) trackRightBack -> trackCheck -> WAITING
+				|when (v == 4) trackBackward -> trackCheck -> WAITING
+				|when (v == 5) trackLeftBack -> trackCheck -> WAITING
+				|when (v == 6) trackRotateLeft -> trackCheck -> WAITING
+				|when (v == 7) trackLeft -> trackCheck -> WAITING
+				),
+HALT = (trackStop -> trackCheck -> WAITING).

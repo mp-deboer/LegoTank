@@ -1,0 +1,12 @@
+range SPEED = -1..1 // -100 to 100
+
+HARDWAREDRIVER =	(setLeftTrackSpeed[v:SPEED] -> HARDWAREDRIVER
+					|setRightTrackSpeed[v:SPEED] -> HARDWAREDRIVER
+					|setTurretSpeed[v:SPEED] -> HARDWAREDRIVER
+					|toggleLED1 -> HARDWAREDRIVER
+					|toggleLED2 -> HARDWAREDRIVER
+					|setLED1on -> HARDWAREDRIVER
+					|setLED1off -> HARDWAREDRIVER
+					|setLED2on -> HARDWAREDRIVER
+					|setLED2off -> HARDWAREDRIVER
+					).

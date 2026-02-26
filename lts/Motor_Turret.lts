@@ -1,0 +1,33 @@
+range PERC = 0..1
+
+MOTOR_TURRET = HALT[0],
+HALT[w:PERC] =	(turretLeft -> GOINGLEFT[0][w]
+				|turretRight -> GOINGRIGHT[0][w]
+				|turretStop -> HALT[w]
+				|setTurretWanted[s:PERC] -> HALT[s]
+				),
+// c = current speed, w = wanted speed
+GOINGLEFT[c:PERC][w:PERC] = (when (c+10 < w) turretAccelerate -> GOINGLEFT[c+10][w]
+							|when (c < w && c+10 > w) turretFinalAccelerate -> GOINGLEFT[w][w]
+							|when (c-10 > w) turretDecelerate -> GOINGLEFT[c-10][w]
+							|when (c > w && c-10 < w) turretFinalDecelerate -> GOINGLEFT[w][w]
+							|when (c == 0) turretStop -> HALT[w]		// the event is not cleared until it is reached,
+							|when (c > 0) turretStop -> GOINGLEFT[c][0]	// so when GOINGLEFT[0] is reached, it will see it must stop
+							|when (c == 0) turretRight -> GOINGRIGHT[c][w]
+							|when (c > 0) turretRight -> GOINGLEFT[c][0] // and here when GOINGLEFT[0] is reached, it will see it must go right.
+							|turretLeft -> GOINGLEFT[c][w]				// It is allowed to change your mind,
+																		//   when the direction becomes left again, it will accelerate back
+							|setTurretWanted[s:PERC] -> GOINGLEFT[c][s]	// <- warning, in check -> run, this will ruin the deceleration when turretRight was given
+																		// normally the event gets stored, and the speed gets stored, and the proces will work to it
+							),
+GOINGRIGHT[c:PERC][w:PERC] = (when (c+10 < w) turretAccelerate -> GOINGRIGHT[c+10][w]
+							|when (c < w && c+10 > w) turretFinalAccelerate -> GOINGRIGHT[w][w]
+							|when (c-10 > w) turretDecelerate -> GOINGRIGHT[c-10][w]
+							|when (c > w && c-10 < w) turretFinalDecelerate -> GOINGRIGHT[w][w]
+							|when (c == 0) turretStop -> HALT[w]
+							|when (c > 0) turretStop -> GOINGRIGHT[c][0]
+							|when (c == 0) turretLeft -> GOINGLEFT[c][w]
+							|when (c > 0) turretLeft -> GOINGRIGHT[c][0]
+							|turretRight -> GOINGRIGHT[c][w]
+							|setTurretWanted[s:PERC] -> GOINGRIGHT[c][s]
+							).

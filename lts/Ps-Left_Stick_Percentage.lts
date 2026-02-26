@@ -1,0 +1,17 @@
+range AXIS = -1..1		// AXIS will become an integer of 10 * (axisvalue + 0.05)
+
+LEFT_STICK_PERCENTAGE = WAITING,
+WAITING =	(setLeftXvalue[x:AXIS] -> setLeftYvalue[y:AXIS] -> DECIDE[x][y]
+			|setLeftYvalue[y:AXIS] -> setLeftXvalue[x:AXIS] -> DECIDE[x][y]
+			|trackReset -> leftStickNoPercentage -> trackSpeedCheck -> trackResetCheck -> WAITING
+			),
+DECIDE[x:AXIS][y:AXIS] =	(when(x == 0 && y == 0) leftStickNoPercentage -> trackSpeedCheck -> WAITING
+							|when(x == 0 && y == -1) leftStickPercentage[1] -> trackSpeedCheck -> WAITING
+							|when(x == 1 && y == -1) leftStickPercentage[1] -> trackSpeedCheck -> WAITING
+							|when(x == 1 && y == 0) leftStickPercentage[1] -> trackSpeedCheck -> WAITING
+							|when(x == 1 && y == 1) leftStickPercentage[1] -> trackSpeedCheck -> WAITING
+							|when(x == 0 && y == 1) leftStickPercentage[1] -> trackSpeedCheck -> WAITING
+							|when(x == -1 && y == 1) leftStickPercentage[1] -> trackSpeedCheck -> WAITING
+							|when(x == -1 && y == 0) leftStickPercentage[1] -> trackSpeedCheck -> WAITING
+							|when(x == -1 && y == -1) leftStickPercentage[1] -> trackSpeedCheck -> WAITING
+							).

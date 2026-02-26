@@ -1,0 +1,46 @@
+range SPEED = -1..1 // -100 to 100
+
+HARDWAREDRIVER =	(setLeftSpeed[v:SPEED] -> HARDWAREDRIVER
+					|setRightSpeed[v:SPEED] -> HARDWAREDRIVER
+					|setTurretSpeed[v:SPEED] -> HARDWAREDRIVER
+					|toggleLED1 -> HARDWAREDRIVER
+					|toggleLED2 -> HARDWAREDRIVER
+					|setLED1on -> HARDWAREDRIVER
+					|setLED1off -> HARDWAREDRIVER
+					|setLED2on -> HARDWAREDRIVER
+					|setLED2off -> HARDWAREDRIVER
+					).
+
+
+HWPERMIT = HWDENY,
+HWDENY = (foundController -> HWALLOW),
+HWALLOW = 	(lostController -> r2NotUsed -> trackSpeedCheck -> leftStickNotUsed -> trackCheck -> rightStickNotUsed -> turretCheck -> HWDENY
+			|setLeftSpeed -> HWALLOW
+			|setRightSpeed -> HWALLOW
+			|setTurretSpeed -> HWALLOW
+			|toggleLED1 -> HWALLOW
+			|toggleLED2 -> HWALLOW
+			|setLED1on -> HWALLOW
+			|setLED1off -> HWALLOW
+			|setLED2on -> HWALLOW
+			|setLED2off -> HWALLOW
+			|getRightXvalue -> HWALLOW
+			|getLeftXvalue -> HWALLOW
+			|getLeftYvalue -> HWALLOW
+			|getR2value -> HWALLOW
+			).
+
+
+CONTROLLER = DISCONNECTED,
+DISCONNECTED = (foundController -> CONNECTED),
+CONNECTED = (lostController -> DISCONNECTED).
+
+
+FOLLOWLINE = WAITING,
+WAITING =	(crossPressed -> r2NotUsed -> trackSpeedCheck -> leftStickNotUsed -> trackCheck -> startFollow -> FOLLOW
+			|getRightXvalue -> WAITING
+			|getLeftXvalue -> WAITING
+			|getLeftYvalue -> WAITING
+			|getR2value -> WAITING
+			),
+FOLLOW = (crossPressed -> stopFollow -> WAITING).

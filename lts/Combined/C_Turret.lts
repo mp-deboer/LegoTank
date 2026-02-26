@@ -1,0 +1,48 @@
+range AXIS = -1..1		// AXIS will become an integer of 10 * (axisvalue + 0.05) or 10 * (axisvalue - 0.05) when negative
+range POS_AXIS = 0..1
+range AXIS_NOT_ZERO = 0..1 	//0 means -1
+
+MODE = OFF,
+OFF = (foundController -> CONTROL),
+CONTROL =	(lostController -> trackReset -> turretReset -> trackResetCheck -> turretResetCheck -> OFF
+			|crossPressed -> trackReset -> trackResetCheck -> startFollow -> FOLLOW
+			|getLeftXvalue[v:AXIS] -> CONTROL
+			|getLeftYvalue[v:AXIS] -> CONTROL
+			|getRightXvalue[v:AXIS] -> CONTROL
+			),
+FOLLOW =	(lostController -> trackReset -> turretReset -> trackResetCheck -> turretResetCheck -> OFF
+			|crossPressed -> stopFollow -> CONTROL
+			|getRightXvalue[v:AXIS] -> FOLLOW
+			).
+
+// When the X-axis has changed at least 1 in comparison with the previous value, fire event
+RIGHT_STICK_X = RIGHT_STICK_X[0],
+RIGHT_STICK_X[c:AXIS] =	(getRightXvalue[v:AXIS] -> DECIDE[c][v]),
+DECIDE[c:AXIS][v:AXIS] =	(when (c != v) setRightXvalue[v] -> RIGHT_STICK_X[v]
+							|when (c == v) rightStickDoNothing -> RIGHT_STICK_X[c]
+							).
+
+RIGHT_STICK_PERCENTAGE = WAITING,
+WAITING = 	(setRightXvalue[i:AXIS] -> DECIDE[i]
+			|turretReset -> rightStickNotUsed -> turretCheck -> turretSpeedCheck -> turretResetCheck -> WAITING),
+DECIDE[i:AXIS] =	(when (i == 0) rightStickNotUsed -> turretCheck -> turretSpeedCheck -> WAITING
+					|when (i == -1) rightStickUsed[0] -> turretCheck -> turretSpeedCheck -> WAITING
+					|when (i == 1) rightStickUsed[1] -> turretCheck -> turretSpeedCheck -> WAITING
+					).
+
+RIGHT_STICK_DIRECTION = WAITING,
+WAITING = 	(rightStickNotUsed -> HALT
+			|rightStickUsed[v:AXIS_NOT_ZERO] -> DECIDE[v]),
+DECIDE[v:AXIS_NOT_ZERO] = 	(when (v == 0) turretLeft -> turretCheck -> WAITING
+							|when (v == 1) turretRight -> turretCheck -> WAITING
+							),
+HALT = (turretStop -> turretCheck -> WAITING).
+
+TURRET_SPEED = WAITING,
+WAITING = 	(rightStickNotUsed -> HALT
+			|rightStickUsed[d:AXIS_NOT_ZERO] -> MOVE[d]
+			),
+HALT = (setTurretWanted[0] -> turretSpeedCheck -> WAITING),
+MOVE[d:AXIS_NOT_ZERO] = (when (d == 0) setTurretWanted[d*-1] -> turretSpeedCheck -> WAITING // when axis = -1, d*-1 = 1
+						|when (d == 1) setTurretWanted[d] -> turretSpeedCheck -> WAITING
+						).

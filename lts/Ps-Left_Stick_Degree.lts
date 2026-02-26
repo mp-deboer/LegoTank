@@ -1,0 +1,17 @@
+range AXIS = -1..1		// AXIS will become an integer of 10 * (axisvalue + 0.05) or 10 * (axisvalue - 0.05) when negative
+
+LEFT_STICK_DEGREE = WAITING,
+WAITING =	(setLeftXvalue[x:AXIS] -> setLeftYvalue[y:AXIS] -> DECIDE[x][y]
+			|setLeftYvalue[y:AXIS] -> setLeftXvalue[x:AXIS] -> DECIDE[x][y]
+			|trackReset -> leftStickNoDegree -> trackCheck -> trackResetCheck -> WAITING
+			),
+DECIDE[x:AXIS][y:AXIS] = 	(when(x == 0 && y == 0) leftStickNoDegree -> trackCheck -> WAITING
+							|when(x == 0 && y == -1) leftStickDegree[0] -> trackCheck -> WAITING
+							|when(x == 1 && y == -1) leftStickDegree[1] -> trackCheck -> WAITING
+							|when(x == 1 && y == 0) leftStickDegree[2] -> trackCheck -> WAITING
+							|when(x == 1 && y == 1) leftStickDegree[3] -> trackCheck -> WAITING
+							|when(x == 0 && y == 1) leftStickDegree[4] -> trackCheck -> WAITING
+							|when(x == -1 && y == 1) leftStickDegree[5] -> trackCheck -> WAITING
+							|when(x == -1 && y == 0) leftStickDegree[6] -> trackCheck -> WAITING
+							|when(x == -1 && y == -1) leftStickDegree[7] -> trackCheck -> WAITING
+							).

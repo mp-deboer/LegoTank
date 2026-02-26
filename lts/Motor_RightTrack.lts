@@ -1,0 +1,33 @@
+range PERC = 0..1
+
+MOTOR_RIGHTTRACK = HALT[0],
+HALT[w:PERC] =	(rightTrackForward -> GOINGFORWARD[0][w]
+				|rightTrackBackward -> GOINGBACKWARD[0][w]
+				|rightTrackStop -> HALT[w]
+				|setRightTrackWanted[s:PERC] -> HALT[s]
+				),
+// c = current speed, w = wanted speed
+GOINGFORWARD[c:PERC][w:PERC] = (when (c+10 < w) rightTrackAccelerate -> GOINGFORWARD[c+10][w]
+							|when (c < w && c+10 > w) rightTrackFinalAccelerate -> GOINGFORWARD[w][w]
+							|when (c-10 > w) rightTrackDecelerate -> GOINGFORWARD[c-10][w]
+							|when (c > w && c-10 < w) rightTrackFinalDecelerate -> GOINGFORWARD[w][w]
+							|when (c == 0) rightTrackStop -> HALT[w]				// the event is not cleared until it is reached,
+							|when (c > 0) rightTrackStop -> GOINGFORWARD[c][0]		// so when GOINGFORWARD[0] is reached, it will see it must stop
+							|when (c == 0) rightTrackBackward -> GOINGBACKWARD[c][w]
+							|when (c > 0) rightTrackBackward -> GOINGFORWARD[c][0]	// and here when GOINGFORWARD[0] is reached, it will see it must go right.
+							|rightTrackForward -> GOINGFORWARD[c][w]				// It is allowed to change your mind,
+																					//   when the direction becomes left again, it will accelerate back
+							|setRightTrackWanted[s:PERC] -> GOINGFORWARD[c][s]		// <- warning, in check -> run, this will ruin the deceleration when rightTrackBackward was given
+																					// normally the event gets stored, and the speed gets stored, and the proces will work to it
+							),
+GOINGBACKWARD[c:PERC][w:PERC] = (when (c+10 < w) rightTrackAccelerate -> GOINGBACKWARD[c+10][w]
+							|when (c < w && c+10 > w) rightTrackFinalAccelerate -> GOINGBACKWARD[w][w]
+							|when (c-10 > w) rightTrackDecelerate -> GOINGBACKWARD[c-10][w]
+							|when (c > w && c-10 < w) rightTrackFinalDecelerate -> GOINGBACKWARD[w][w]
+							|when (c == 0) rightTrackStop -> HALT[w]
+							|when (c > 0) rightTrackStop -> GOINGBACKWARD[c][0]
+							|when (c == 0) rightTrackForward -> GOINGFORWARD[c][w]
+							|when (c > 0) rightTrackForward -> GOINGBACKWARD[c][0]
+							|rightTrackBackward -> GOINGBACKWARD[c][w]
+							|setRightTrackWanted[s:PERC] -> GOINGBACKWARD[c][s]
+							).

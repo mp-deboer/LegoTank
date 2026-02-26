@@ -1,0 +1,9 @@
+range AXIS_NOT_ZERO = 0..1 	//0 means -1
+
+RIGHT_STICK_DIRECTION = WAITING,
+WAITING = 	(rightStickNotUsed -> HALT
+			|rightStickUsed[v:AXIS_NOT_ZERO] -> DECIDE[v]),
+DECIDE[v:AXIS_NOT_ZERO] = 	(when (v == 0) turretLeft -> turretCheck -> WAITING
+							|when (v == 1) turretRight -> turretCheck -> WAITING
+							),
+HALT = (turretStop -> turretCheck -> WAITING).
