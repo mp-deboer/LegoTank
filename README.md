@@ -5,14 +5,9 @@ This is a revival of a 2014 school project: a line-following robot built as a LE
 The source code in this repo is the original, as-is version from the project's completion (v1.1). Future commits will show revival efforts, including bug fixes, modernizations (e.g., added PS5 controller compatibility, updated OS), and new features.
 
 ## Project Structure
-- **lts/**: Design and modeling files for concurrency and state machines. See [README.md in that folder](./lts/README.md) for details.
-- **src/Pibotica.X**: C firmware for the PIC microcontroller. See [README.md in that folder](./src/Pibotica.X/README.md) for details.
-- **src/tankpack**: Java control software running on the Raspberry Pi, implementing concurrent state machines for behaviors. Breakdown:
-  - Core: `Main.java` (entry point), `CommunicationDriver.java` (manages events and processes), `StateMachine.java` (abstract base for state machines).
-  - Drivers: `HardwareDriver.java` (handles SPI/GPIO for hardware commands, e.g., motors, sensors, LEDs), `Sounds.java` (triggers audio on events like controller connect/disconnect).
-  - Logic: `LineFollower.java` (implements line-following using IR sensors), and StateMachine implementations like `Led2.java` (LED control), `Mode.java` (operation modes), `Motors.java` (motor acceleration/deceleration).
-  - Input: `PsController.java` (polls PS3 controller), `Buttons.java` (handles button events), `Tracks.java` (translates left stick to track movements), `Turret.java` (translates right stick to turret control).
-  - Utilities: `PsComponent.java` and `SensorPosition.java` (enums for controller components and sensors), `StateMachineTemplate.java` (template for new state machines).
+- **lts/**: Design and modeling files for concurrency and state machines. See [lts/README.md](./lts/README.md) for details on LTS files and the LTSA tool.
+- **src/Pibotica.X**: C firmware for the PIC microcontroller (PiBotica PCB). See [src/Pibotica.X/README.md](./src/Pibotica.X/README.md) for details on the firmware and microcontroller.
+- **src/tankpack**: Java control software running on the Raspberry Pi. See [src/tankpack/README.md](./src/tankpack/README.md) for details on code structure, core classes, drivers, logic, input handling, and utilities.
 - **sound/**: Audio resources (.wav files) for event-triggered sounds (e.g., tank shots, horns, connection chimes).
 - **Root files**:
   - `changelog.txt`: Project history up to v1.1.
@@ -33,10 +28,9 @@ Required libraries:
 ## Building and Running
 1. Ensure dependencies are installed.
 2. Comment out / replace with "Object" any StateMachine references at CommunicationDriver.java.
-3. Build CommunicationDriver: `make bin/tankpack/CommunicationDriver.class`.
-4. Compile and package: `make all`.
-5. Undo changes from step 2.
-6. Rebuild and run: `make start`.
+3. Compile and package: `make all`.
+4. Undo changes from step 2.
+5. Rebuild and run: `make start`.
 
 ## Hardware Notes
 - The Raspberry Pi communicates with the PIC16F1829 via SPI.
