@@ -57,7 +57,7 @@ public class Buttons
 				
 		};
 		
-		public PsButton(CommunicationDriver cd, PsController psContoller, PsComponent button)
+		public PsButton(CommunicationDriver cd, PsController psController, PsComponent button)
 		{
 			String type = button.toString().toLowerCase();
 			this.Event[1] = type + "Pressed";
@@ -76,7 +76,7 @@ public class Buttons
 			
 			// Declare own variables:
 			this.button = button;
-			this.psC = psContoller;
+			this.psC = psController;
 			
 			processID = cd.registerNewProcess(this, (type + "Button"), Event, State, getStateNr(currentState),
 					getSensitives());
@@ -273,7 +273,7 @@ public class Buttons
 		
 		protected boolean isPressed(PsComponent c)
 		{
-			return (psC.getComps()[c.getIndex()].getPollData() == 1.0f);
+			return (psC.getComps()[c.getIndex(psC.getIsPs5())].getPollData() == 1.0f);
 		}
 	}
 }

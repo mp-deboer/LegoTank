@@ -12,6 +12,7 @@ public class PsController extends StateMachine
 	private Controller PsController;
 	private Controller[] controllers;
 	private Component[] components;
+	private boolean isPs5;
 	
 	private String[] State =
 	{
@@ -181,12 +182,25 @@ public class PsController extends StateMachine
 			e.printStackTrace();
 		}
 		
+		if (debug) System.out.println("controllers: " + controllers.length);
+		
 		for (int i = 0; i < controllers.length && tmpController == null; i++)
 		{
+			if (debug) System.out.println("controller type: " + controllers[i].getType());
+			if (debug) System.out.println("controller name: " + controllers[i].getName());
+			
 			if (controllers[i].getType() == Controller.Type.STICK
 					&& controllers[i].getName().contains("PLAYSTATION(R)3 Controller"))
 			{
 				tmpController = controllers[i];
+				isPs5 = false;
+			}
+			// 2025-12-13 MdB: Added PS5 controller support
+			else if (controllers[i].getType() == Controller.Type.GAMEPAD && controllers[i].getName()
+					.contains("Sony Interactive Entertainment DualSense Wireless Controller"))
+			{
+				tmpController = controllers[i];
+				isPs5 = true;
 			}
 		}
 		
@@ -203,6 +217,11 @@ public class PsController extends StateMachine
 			}
 			return true;
 		}
+	}
+	
+	public boolean getIsPs5()
+	{
+		return isPs5;
 	}
 	
 	private static ControllerEnvironment createDefaultEnvironment() throws ReflectiveOperationException
