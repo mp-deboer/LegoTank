@@ -1,8 +1,6 @@
 # LegoTank
 
-This is a revival of a 2014 school project: a line-following robot built as a LEGO tank. The project runs on a Raspberry Pi for high-level control and a PIC microcontroller for low-level hardware interfacing. The tank supports manual control via a PS3 controller, line following, sounds, and basic motor/sensor operations.
-
-The source code in this repo is the original, as-is version from the project's completion (v1.1). Future commits will show revival efforts, including bug fixes, modernizations (e.g., added PS5 controller compatibility, updated OS), and new features.
+This is a revival of a 2014 school project: a line-following robot built as a LEGO tank. The project runs on a Raspberry Pi for high-level control and a PIC microcontroller for low-level hardware interfacing. The tank supports manual control via either a PS3 or a PS5 controller, line following, sounds, and basic motor/sensor operations.
 
 ## Project Structure
 - **lts/**: Design and modeling files for concurrency and state machines. See [lts/README.md](./lts/README.md) for details on LTS files and the LTSA tool.
@@ -10,7 +8,6 @@ The source code in this repo is the original, as-is version from the project's c
 - **src/tankpack**: Java control software running on the Raspberry Pi. See [src/tankpack/README.md](./src/tankpack/README.md) for details on code structure, core classes, drivers, logic, input handling, and utilities.
 - **sound/**: Audio resources (.wav files) for event-triggered sounds (e.g., tank shots, horns, connection chimes).
 - **Root files**:
-  - `changelog.txt`: Project history up to v1.1.
   - `Manifest.txt`: JAR manifest for packaging.
   - `Makefile`: Build script for compiling Java and creating Tank.jar.
 
@@ -21,7 +18,7 @@ Developed and tested on:
 - **Java Version**: 1.7.0_40.
 
 Required libraries:
-- **JInput**: 2.0.1 (for PS3 controller input; requires JUtils).
+- **JInput**: 2.0.1 (for PS3/PS5 controller input; requires JUtils).
 - **Pi4J**: 0.0.5 (for GPIO; requires WiringPi).
 - **WiringPi**: 2.13 (runtime dependency for Pi4J).
 
@@ -36,5 +33,5 @@ Required libraries:
 - The Raspberry Pi communicates with the PIC16F1829 via SPI.
 - Sensors: IR for line following (left, middle, right).
 - Motors: Three DC motors (left/right tracks, turret) controlled via PWM.
-- Controller: PS3 via Bluetooth (using JInput).
-- LEDs: For feedback (e.g., when receiving PS3 input or when following a line).
+- Controller: PS3 via Bluetooth or PS5 via USB (using JInput).
+- LEDs: For feedback (e.g., when receiving PS3/PS5 input or when following a line).

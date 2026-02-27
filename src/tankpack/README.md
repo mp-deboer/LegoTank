@@ -1,6 +1,6 @@
 # Java Source
 
-This folder contains the Java source code for the Raspberry Pi-based control software of the LEGO tank robot project (original v1.1 from 2014). It implements concurrent state machines for handling PS3 controller input, hardware interactions, line following, and other behaviors. The code uses libraries like Pi4J for GPIO/SPI, JInput for PS3 controller, and relies on the PIC firmware (in `../Pibotica.X`) for low-level motor/sensor control.
+This folder contains the Java source code for the Raspberry Pi-based control software of the LEGO tank robot project. It implements concurrent state machines for handling PS3/PS5 controller input, hardware interactions, line following, and other behaviors. The code uses libraries like Pi4J for GPIO/SPI, JInput for PS3 & PS5 controller, and relies on the PIC firmware (in `../Pibotica.X`) for low-level motor/sensor control.
 
 ## Code Structure
 - **Core**:
@@ -20,13 +20,13 @@ This folder contains the Java source code for the Raspberry Pi-based control sof
     - `Motors.java`: Handles motor acceleration/deceleration for tracks and turret.
 
 - **Input**:
-  - `PsController.java`: Polls PS3 controller components (buttons, sticks) using JInput, fires events when connection status changes.
-  - `Buttons.java`: Threaded handling for PS3 buttons, translating presses/releases to events.
+  - `PsController.java`: Polls PS3/PS5 controller components (buttons, sticks) using JInput, fires events when connection status changes.
+  - `Buttons.java`: Threaded handling for PS3/PS5 buttons, translating presses/releases to events.
   - `Tracks.java`: Processes left stick input for track control (direction, speed).
   - `Turret.java`: Processes right stick input for turret rotation.
 
 - **Utilities**:
-  - `PsComponent.java`: Enum for PS3 controller components (e.g., buttons, axes).
+  - `PsComponent.java`: Enum for PS3 & PS5 controller components (e.g., buttons, axes).
   - `SensorPosition.java`: Enum for IR sensor positions (left, middle, right).
   - `../../StateMachineTemplate.java`: Template for creating new state machines.
 
