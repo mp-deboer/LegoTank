@@ -196,8 +196,9 @@ public class PsController extends StateMachine
 				isPs5 = false;
 			}
 			// 2025-12-13 MdB: Added PS5 controller support
-			else if (controllers[i].getType() == Controller.Type.GAMEPAD && controllers[i].getName()
-					.contains("Sony Interactive Entertainment DualSense Wireless Controller"))
+			else if (controllers[i].getType() == Controller.Type.GAMEPAD
+					&& (controllers[i].getName().equals("Sony Interactive Entertainment DualSense Wireless Controller")
+							|| controllers[i].getName().equals("DualSense Wireless Controller")))
 			{
 				tmpController = controllers[i];
 				isPs5 = true;

@@ -211,8 +211,9 @@ public class Turret
 				// round down from 0.0 - 0.5 and round up from 0.5 - 1.0
 				double tmpValue = psC.getComps()[c.getIndex(psC.getIsPs5())].getPollData();
 				
-				if (tmpValue == 0.0) return 0;
-				else if (tmpValue > 0.0)
+				// 2026-01-02 MdB: Ignore noise
+				if (tmpValue <= 0.06f && tmpValue >= -0.06f) return 0;
+				else if (tmpValue > 0.0f)
 					return ((int) (psC.getComps()[c.getIndex(psC.getIsPs5())].getPollData() * 100 + 0.5));
 				// tmpValue < 0.0
 				else return ((int) (psC.getComps()[c.getIndex(psC.getIsPs5())].getPollData() * 100 - 0.5));

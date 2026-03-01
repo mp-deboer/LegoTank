@@ -1,17 +1,14 @@
 package tankpack;
 
-import com.pi4j.io.gpio.GpioController;
-import com.pi4j.io.gpio.GpioFactory;
-import com.pi4j.io.gpio.GpioPinDigitalOutput;
-import com.pi4j.io.gpio.PinState;
-import com.pi4j.io.gpio.RaspiPin;
-import com.pi4j.wiringpi.Spi;
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 
 public class HardwareDriver extends StateMachine
 {
-	// define SPI constants
-	private final int SPICHANNEL = 0;
-	private final int CLKSPEED = 500000;
 	// define LED constants
 	private final byte LED1ON = (byte) 10;
 	private final byte LED1OFF = (byte) 11;
@@ -28,14 +25,13 @@ public class HardwareDriver extends StateMachine
 	private final byte IR1 = (byte) 1;
 	private final byte IR2 = (byte) 2;
 	private final byte IR3 = (byte) 3;
-	private final byte GETOUTPUT = (byte) 0;
 	
-	private final GpioController GPIO;
-	private final GpioPinDigitalOutput CE; // Slave select pin
-	private final GpioPinDigitalOutput LED2;
+	private static final int PIN_LED = 18; // GPIO_1 / wPi = 1; BCM = 18
 	
 	// Own variables
 	int value;
+	FileOutputStream fos;
+	FileInputStream fis;
 	
 	// State-machine variables
 	boolean boolData;
@@ -92,22 +88,8 @@ public class HardwareDriver extends StateMachine
 	
 	public HardwareDriver(CommunicationDriver cd)
 	{
-		GPIO = GpioFactory.getInstance();
-		
-		CE = GPIO.provisionDigitalOutputPin(RaspiPin.GPIO_10, "Slave Select", PinState.HIGH);
-		CE.high();
-		
-		LED2 = GPIO.provisionDigitalOutputPin(RaspiPin.GPIO_01, "LED 2 (RPi)", PinState.HIGH);
-		LED2.high();
-		
-		if (Spi.wiringPiSPISetup(SPICHANNEL, CLKSPEED) == -1)
-		{
-			System.out.println("Failed to setup the SPI.");
-		}
-		
 		// StateMachine variables
 		debug = false;
-		
 		super.State = this.State;
 		super.Event = this.Event;
 		super.SensitivityTable = this.SensitivityTable;
@@ -120,6 +102,18 @@ public class HardwareDriver extends StateMachine
 		
 		// Declare own variables:
 		value = 0;
+		try
+		{
+			fos = new FileOutputStream("/dev/spidev0.0");
+			fis = new FileInputStream("/dev/spidev0.0");
+		}
+		catch (FileNotFoundException e)
+		{
+			System.out.println("Error: Unable to open /dev/spidev0.0.");
+		}
+		
+		// Initialise LED state
+		setLed2(false, debug);
 		
 		processID = cd.registerNewProcess(this, this.getClass().getName(), Event, State, getStateNr(currentState),
 				getSensitives());
@@ -199,7 +193,7 @@ public class HardwareDriver extends StateMachine
 			else if (nextEvent.equals(Event[2]))
 			{
 				// LED2 on
-				LED2.low();
+				setLed2(true, debug);
 				
 				error = false;
 				changeState = false;
@@ -209,7 +203,7 @@ public class HardwareDriver extends StateMachine
 			else if (nextEvent.equals(Event[3]))
 			{
 				// LED2 Off
-				LED2.high();
+				setLed2(false, debug);
 				
 				error = false;
 				changeState = false;
@@ -254,9 +248,10 @@ public class HardwareDriver extends StateMachine
 			// Event = toggleLED2
 			else if (nextEvent.equals(Event[8]))
 			{
-				LED2.toggle();
+				// unsupported
+				// LED2.toggle();
 				
-				error = false;
+				error = true;
 				changeState = false;
 			}
 			
@@ -290,11 +285,14 @@ public class HardwareDriver extends StateMachine
 				cmd
 		};
 		
-		CE.setState(PinState.LOW);
-		
-		Spi.wiringPiSPIDataRW(SPICHANNEL, b, 1);
-		
-		CE.setState(PinState.HIGH);
+		try
+		{
+			fos.write(b);
+		}
+		catch (IOException e)
+		{
+			System.out.println("Error: Failed to write byte.");
+		}
 	}
 	
 	private byte determineByte(byte track, int speed)
@@ -369,17 +367,71 @@ public class HardwareDriver extends StateMachine
 	
 	private byte receive()
 	{
-		byte[] b =
+		try
 		{
-				GETOUTPUT
-		};
+			value = fis.read();
+			if (value == -1)
+			{
+				throw new IOException("Unexpected EOF");
+			}
+		}
+		catch (IOException e)
+		{
+			System.out.println("Error: Receive failed.");
+			return (byte) -1; // Caller checks if (receive() & 0xFF) == 255 for error, assuming 255 isn't valid data
+		}
+		return (byte) value;
+	}
+	
+	// Function to set state of LED via Bash command, which requires killing the process afterwards
+	private void setLed2(boolean state, boolean verbose)
+	{
+		String command = "gpioset -l -c gpiochip0 " + PIN_LED + "=" + (state ? "1" : "0");
 		
-		CE.setState(PinState.LOW);
+		// Announce command to be executed
+		if (verbose) System.out.println("+ " + command);
 		
-		Spi.wiringPiSPIDataRW(SPICHANNEL, b, 1);
+		try
+		{
+			// Run command, add ', "-x"' to run in verbose mode
+			String[] cmdArray =
+			{
+					"bash", "-c", command
+			};
+			Process process = Runtime.getRuntime().exec(cmdArray);
+			
+			// Read stderr only for errors (non-blocking with timeout)
+			new Thread(() -> {
+				try (BufferedReader stderr = new BufferedReader(new InputStreamReader(process.getErrorStream())))
+				{
+					String line;
+					while ((line = stderr.readLine()) != null)
+					{
+						// Print stderr to Java's stderr
+						System.err.println("gpioset error: " + line);
+					}
+					
+					// Close streams
+					stderr.close();
+				}
+				catch (IOException e)
+				{
+					// ignore
+				}
+			}).start();
+			
+			// Short delay to allow set
+			sleep(300);
+			
+			// Finally, kill the process
+			process.destroy();
+		}
+		catch (IOException e)
+		{
+			System.err.println("Error (setLed): " + e.getMessage());
+			e.printStackTrace();
+		}
 		
-		CE.setState(PinState.HIGH);
-		
-		return b[0];
+		return;
 	}
 }
