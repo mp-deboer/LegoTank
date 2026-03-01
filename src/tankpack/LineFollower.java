@@ -221,13 +221,13 @@ public class LineFollower extends StateMachine
 					// Instruct motors with the new direction
 					instructMotors(SPEED);
 					
-					// if (debug)
-					// {
-					// System.out.printf("%s%3d%-8s %s%3d%-8s %s%3d%-8s, %-15s\r", (leftValue > BLACK) ? "[" : " ",
-					// leftValue, (leftValue > BLACK) ? "]" : " ", (middleValue > BLACK) ? "[" : " ",
-					// middleValue, (middleValue > BLACK) ? "]" : " ", (rightValue > BLACK) ? "[" : " ",
-					// rightValue, (rightValue > BLACK) ? "]" : " ", direction);
-					// }
+					if (debug)
+					{
+						System.out.printf("%s%3d%-8s %s%3d%-8s %s%3d%-8s, %-15s\r", (leftValue > BLACK) ? "[" : " ",
+								leftValue, (leftValue > BLACK) ? "]" : " ", (middleValue > BLACK) ? "[" : " ",
+								middleValue, (middleValue > BLACK) ? "]" : " ", (rightValue > BLACK) ? "[" : " ",
+								rightValue, (rightValue > BLACK) ? "]" : " ", direction);
+					}
 					sleep(11);
 				}
 				
