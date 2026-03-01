@@ -6,6 +6,7 @@ import java.net.URL;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
+import javax.sound.sampled.FloatControl;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
@@ -244,6 +245,8 @@ public class Sounds
 			try
 			{
 				clip.open(getAudioIn(fileLocation));
+				
+				assertMaxVolume();
 			}
 			catch (LineUnavailableException | IOException e)
 			{
@@ -252,6 +255,19 @@ public class Sounds
 			
 			clip.start();
 			sleep(5);
+		}
+		
+		private void assertMaxVolume()
+		{
+			FloatControl volume = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
+			if (volume.getMaximum() != volume.getValue())
+			{
+				if (debug) System.out.println("Setting volume to max: " + volume.getMaximum());
+				if (debug) System.out.println("Volume min: " + volume.getMinimum());
+				
+				volume.setValue(volume.getMaximum());
+				if (debug) System.out.println("Volume is set to: " + volume.getValue());
+			}
 		}
 	}
 }
