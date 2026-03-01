@@ -1,6 +1,8 @@
 # Java Source
 
-This folder contains the Java source code for the Raspberry Pi-based control software of the LEGO tank robot project. It implements concurrent state machines for handling PS3/PS5 controller input, hardware interactions, line following, and other behaviors. The code uses libraries like Pi4J for GPIO/SPI, JInput for PS3 & PS5 controller, and relies on the PIC firmware (in `../Pibotica.X`) for low-level motor/sensor control.
+This folder contains the Java source code for the Raspberry Pi-based control software of the LEGO tank robot project. It implements concurrent state machines for handling PS3/PS5 controller input, hardware interactions, line following, and other behaviors. The code uses the JInput library for reading the PS3 & PS5 controllers, and relies on the PIC firmware (in `../Pibotica.X`) for low-level motor/sensor control.
+
+**Important**: Before running the code, follow the **SPI Configuration** steps in the [root README](../../README.md) to set the correct 500 kHz clock speed.
 
 ## Code Structure
 - **Core**:
@@ -9,7 +11,7 @@ This folder contains the Java source code for the Raspberry Pi-based control sof
   - `StateMachine.java`: Abstract base class for state machines, handling events, sensitivities, and execution.
 
 - **Drivers**:
-  - `HardwareDriver.java`: Maps high-level commands to SPI bytes for PIC communication (e.g., motor speeds, sensor reads, LEDs). Uses Pi4J for GPIO and WiringPi for SPI.
+  - `HardwareDriver.java`: Maps high-level commands to SPI bytes for PIC communication (e.g., motor speeds, sensor reads, LEDs). Uses bash command `gpioset` for setting LED2 state and input/output streams for SPI read/write operations.
   - `Sounds.java`: Triggers .wav audio files on events (e.g., controller connect/disconnect, button presses like circle for shots).
 
 - **Logic**:
@@ -31,6 +33,6 @@ This folder contains the Java source code for the Raspberry Pi-based control sof
   - `../../StateMachineTemplate.java`: Template for creating new state machines.
 
 ## Dependencies and Build
-See root README.md for full dependencies (e.g., Java 1.7, Pi4J 0.0.5, JInput 2.0.1). Use the root Makefile to compile and run.
+See [root README](../../README.md) for full dependencies, SPI setup, and build instructions. Use the root Makefile to compile and run.
 
-This code is tightly coupled with LTS designs (in `../../lts/`) for concurrency validation.
+This code is tightly coupled with the LTS designs (in `../../lts/`) for concurrency validation.

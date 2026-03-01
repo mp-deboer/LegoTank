@@ -13,25 +13,54 @@ This is a revival of a 2014 school project: a line-following robot built as a LE
 
 ## Dependencies
 Developed and tested on:
-- **Operating System**: Raspbian GNU/Linux 7 (wheezy).
+- **Operating System**: Raspberry Pi OS (Legacy, 32-bit) Lite (Raspbian GNU/Linux 12 / Bookworm).
 - **Hardware**: Raspberry Pi Model 1 B (revision 2 board).
-- **Java Version**: 1.7.0_40.
+- **Java Version**: OpenJDK 17.
 
 Required libraries:
 - **JInput**: 2.0.1 (for PS3/PS5 controller input; requires JUtils).
-- **Pi4J**: 0.0.5 (for GPIO; requires WiringPi).
-- **WiringPi**: 2.13 (runtime dependency for Pi4J).
+- **libgpiod2**: 1.6.3 (required during runtime for setting the state of LED2)
+
+### SPI Configuration (required for HardwareDriver)
+The PIC firmware expects a SPI clock speed of 500 kHz.
+As the default SPI clock speed cannot be set directly via `/boot/firmware/config.txt` on Raspberry Pi OS Bookworm, a custom device tree overlay must be created.
+
+#### Steps to create and install the overlay
+
+1. Download the base overlay source:
+<pre><code>wget https://raw.githubusercontent.com/raspberrypi/linux/rpi-6.6.y/arch/arm/boot/dts/overlays/spi0-1cs-overlay.dts</code></pre>
+
+2. Edit the file and add the following fragment **before** the `__overrides__` section:
+<pre><code>fragment@4 {
+    target = <&spidev0>;
+    __overlay__ {
+        spi-max-frequency = <500000>;
+    };
+};</code></pre>
+
+3. Save as `custom-spi0-1cs.dts`, then compile:
+<pre><code>dtc -@ -Hepapr -I dts -O dtb -o custom-spi0-1cs.dtbo custom-spi0-1cs.dts</code></pre>
+
+4. Copy the compiled overlay:
+<pre><code>sudo cp custom-spi0-1cs.dtbo /boot/firmware/overlays/</code></pre>
+
+5. Add to `/boot/firmware/config.txt` (at the end):
+<pre><code>dtoverlay=custom-spi0-1cs</code></pre>
+
+6. Reboot:
+<pre><code>sudo reboot</code></pre>
+
+After this step, the SPI bus will default to 500 kHz, matching the speed of the PIC Firmware.
 
 ## Building and Running
-1. Ensure dependencies are installed.
-2. Comment out / replace with "Object" any StateMachine references at CommunicationDriver.java.
+1. Follow the SPI Configuration above.
+2. Ensure dependencies are installed.
 3. Compile and package: `make all`.
-4. Undo changes from step 2.
-5. Rebuild and run: `make start`.
+4. Run: `make start`.
 
 ## Hardware Notes
 - The Raspberry Pi communicates with the PIC16F1829 via SPI.
 - Sensors: IR for line following (left, middle, right).
 - Motors: Three DC motors (left/right tracks, turret) controlled via PWM.
-- Controller: PS3 via Bluetooth or PS5 via USB (using JInput).
+- Controller: PS3 or PS5 via Bluetooth (using JInput).
 - LEDs: For feedback (e.g., when receiving PS3/PS5 input or when following a line).
