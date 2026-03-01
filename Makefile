@@ -1,51 +1,64 @@
+define ANNOUNCE_BODY
+usage: make [option] [-n]
+Available options:
+- default (no option given): Compiles class files only
+- start:    Compiles class files and starts via class files
+- all:      Runs 'clean', then bulk compiles class files
+- allstart: Runs 'all' and 'start'
+- jar:      Compiles class files and creates jar file
+- jarstart: Runs 'jar', then starts via jar
+- alljar:   Runs 'rjar', 'all' and then 'jar'
+- clean:    Removes class file directory
+- rjar:     Remove jar file (used by option 'alljar')
+- deploy:   Copy jar file to home directory
+
+Optional: Add argument -n to 'dry-run' (show commands, but do not execute them).
+endef
+export ANNOUNCE_BODY
+
 CC = javac
-CFLAGS = -classpath /opt/pi4j/lib/pi4j-core.jar:/usr/share/java/jinput.jar:./bin -sourcepath ./src/tankpack
-classes = bin/tankpack/Main.class
-
 RC = java
-RFLAGS = -ea -Djava.library.path=".:/usr/lib/jni" -cp Tank.jar
+RFLAGS = -ea -Djava.library.path=".:/usr/lib/jni"
+CLASSPATH = /usr/share/java/jinput.jar:./bin
+SOURCES = $(wildcard src/tankpack/*.java)
+CLASSES = $(SOURCES:src/tankpack/%.java=bin/tankpack/%.class)
+JAR = Tank.jar
 
-.SUFFIXES: .java .class .jar
+# Default target: incremental compilation
+default: $(CLASSES)
 
+# Incremental rule: only recompile the changed .java file
 bin/tankpack/%.class: src/tankpack/%.java
-	$(CC) $(CFLAGS) -d ./bin $<
+	$(CC) -classpath $(CLASSPATH) -d bin $<
 
-# Requires having CommunicationDriver.class
-# Temporarily remove StateMachine depencencies from CommunicationDriver if CommunicationDriver.class does not exist yet
-all: clean Tank.jar
+# Other options
+start: $(CLASSES)
+	$(RC) $(RFLAGS) -classpath $(CLASSPATH):. tankpack.Main
 
-Tank.jar: $(classes)
-	cd bin; jar cfem $@ Main ../Manifest.txt tankpack -C .. sound;mv $@ ..
+# Bulk compile class files, even with unchanged java files
+all: clean
+	$(CC) -classpath $(CLASSPATH) -d bin $(SOURCES)
 
-start: Tank.jar
-	sudo $(RC) $(RFLAGS) tankpack.Main
+allstart: all start
 
-clean: rjar
-	find bin/tankpack -name '*.class' ! -name 'CommunicationDriver.class' -exec $(RM) {} \;
-	
+jar: $(JAR)
+
+$(JAR): $(CLASSES)
+	cd bin && jar cfem ../$@ tankpack/Main ../Manifest.txt tankpack -C .. sound
+
+jarstart: jar
+	$(RC) $(RFLAGS) -jar $(JAR)
+
+alljar: rjar all jar
+
+clean:
+	rm -rf bin/tankpack
+
 rjar:
-	$(RM) Tank.jar
-	
-bin/tankpack/Main.class: src/tankpack/Main.java bin/tankpack/CommunicationDriver.class bin/tankpack/HardwareDriver.class bin/tankpack/Mode.class bin/tankpack/PsComponent.class bin/tankpack/Buttons.class bin/tankpack/Led2.class bin/tankpack/PsController.class bin/tankpack/Turret.class bin/tankpack/Motors.class bin/tankpack/Tracks.class bin/tankpack/Sounds.class bin/tankpack/SensorPosition.class bin/tankpack/LineFollower.class
+	rm -f $(JAR)
 
-bin/tankpack/StateMachine.class: src/tankpack/StateMachine.java bin/tankpack/CommunicationDriver.class
+deploy: jar
+	cp $(JAR) /home/pi
 
-bin/tankpack/Mode.class: src/tankpack/Mode.java bin/tankpack/StateMachine.class
-
-bin/tankpack/HardwareDriver.class: src/tankpack/HardwareDriver.java bin/tankpack/StateMachine.class bin/tankpack/SensorPosition.class
-
-bin/tankpack/PsController.class: src/tankpack/PsController.java bin/tankpack/StateMachine.class
-
-bin/tankpack/Buttons.class: src/tankpack/Buttons.java bin/tankpack/StateMachine.class bin/tankpack/PsController.class bin/tankpack/PsComponent.class
-
-bin/tankpack/Turret.class: src/tankpack/Turret.java bin/tankpack/StateMachine.class bin/tankpack/PsController.class bin/tankpack/PsComponent.class
-
-bin/tankpack/Tracks.class: src/tankpack/Tracks.java bin/tankpack/StateMachine.class bin/tankpack/PsController.class bin/tankpack/PsComponent.class
-
-bin/tankpack/Led2.class: src/tankpack/Led2.java bin/tankpack/StateMachine.class
-
-bin/tankpack/Motors.class: src/tankpack/Motors.java bin/tankpack/StateMachine.class
-
-bin/tankpack/Sounds.class: src/tankpack/Sounds.java bin/tankpack/StateMachine.class
-
-bin/tankpack/LineFollower.class: src/tankpack/LineFollower.java bin/tankpack/SensorPosition.class bin/tankpack/StateMachine.class
+help:
+	@echo "$$ANNOUNCE_BODY"
