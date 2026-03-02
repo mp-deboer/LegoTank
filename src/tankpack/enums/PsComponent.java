@@ -1,4 +1,4 @@
-package tankpack;
+package tankpack.enums;
 
 //PS3 components index constants
 // 2025-12-13 MdB: Added support for PS5 controller
@@ -29,6 +29,7 @@ public enum PsComponent
 	L2_Sensor(29, 15),
 	R2_Sensor(30, 18);
 	
+	public static final int BUTTONAMOUNT = 17;
 	private int ps3Val;
 	private int ps5Val;
 	

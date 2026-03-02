@@ -9,7 +9,7 @@ Available options:
 - jarstart: Runs 'jar', then starts via jar
 - alljar:   Runs 'rjar', 'all' and then 'jar'
 - clean:    Removes class file directory
-- rjar:     Remove jar file (used by option 'alljar')
+- rjar:     Remove jar file
 - deploy:   Copy jar file to home directory
 
 Optional: Add argument -n to 'dry-run' (show commands, but do not execute them).
@@ -20,7 +20,7 @@ CC = javac
 RC = java
 RFLAGS = -ea -Djava.library.path=".:/usr/lib/jni"
 CLASSPATH = /usr/share/java/jinput.jar:./bin
-SOURCES = $(wildcard src/tankpack/*.java)
+SOURCES = $(wildcard src/tankpack/*.java src/tankpack/enums/*.java src/tankpack/util/*.java)
 CLASSES = $(SOURCES:src/tankpack/%.java=bin/tankpack/%.class)
 JAR = Tank.jar
 
@@ -32,8 +32,9 @@ bin/tankpack/%.class: src/tankpack/%.java
 	$(CC) -classpath $(CLASSPATH) -d bin $<
 
 # Other options
+# Start with debug = true / prints DO loop time
 start: $(CLASSES)
-	$(RC) $(RFLAGS) -classpath $(CLASSPATH):. tankpack.Main
+	$(RC) $(RFLAGS) -classpath $(CLASSPATH):. tankpack.Main true
 
 # Bulk compile class files, even with unchanged java files
 all: clean

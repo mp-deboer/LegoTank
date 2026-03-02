@@ -1,0 +1,197 @@
+package tankpack;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import tankpack.enums.MotorType;
+import tankpack.enums.SensorPosition;
+
+public class Driver_Hardware
+{
+	private final boolean debug = false;
+	
+	// define LED2 constants
+	private final int PIN_LED2 = 18; // GPIO_1 / wPi = 1; BCM = 18
+	
+	// define LED1 constants
+	private final byte LED1ON = (byte) 10;
+	private final byte LED1OFF = (byte) 11;
+	private final byte LED1TOGGLE = (byte) 12;
+	
+	// define Motor constants
+	private final byte MAXSPEED = (byte) 31;
+	private final byte TURRET = (byte) 64;
+	private final byte LEFTTRACK = (byte) 128;
+	private final byte RIGHTTRACK = (byte) 192;
+	private final byte FORWARD = (byte) 0;
+	private final byte BACKWARD = (byte) 32;
+	private final byte HALT = (byte) 0;
+	
+	// define sensor constants
+	private final byte IR1 = (byte) 1;
+	private final byte IR2 = (byte) 2;
+	private final byte IR3 = (byte) 3;
+	
+	// Own variables
+	private GpioHandler gpioHandler = new GpioHandler(PIN_LED2, debug);
+	FileOutputStream fos;
+	FileInputStream fis;
+	
+	public Driver_Hardware()
+	{
+		File spiDev = new File("/dev/spidev0.0");
+		try
+		{
+			fos = new FileOutputStream(spiDev);
+			fis = new FileInputStream(spiDev);
+		}
+		catch (FileNotFoundException e)
+		{
+			System.out.println("Failed to open SPI device");
+		}
+	}
+	
+	public void start()
+	{
+		// Start GpioHandler thread
+		gpioHandler.start();
+	}
+	
+	////////////////////////////////////////////////////////////////////////////////
+	// LED2 functions
+	////////////////////////////////////////////////////////////////////////////////
+	
+	public void setLed2Off()
+	{
+		gpioHandler.setDesiredLed2State(false);
+	}
+	
+	public void setLed2On()
+	{
+		gpioHandler.setDesiredLed2State(true);
+	}
+	
+	////////////////////////////////////////////////////////////////////////////////
+	// SPI functions
+	////////////////////////////////////////////////////////////////////////////////
+	
+	public void setLed1Off()
+	{
+		send(LED1OFF);
+	}
+	
+	public void setLed1On()
+	{
+		send(LED1ON);
+	}
+	
+	public void toggleLed1()
+	{
+		send(LED1TOGGLE);
+	}
+	
+	public void setMotorSpeed(MotorType motor, int speed)
+	{
+		switch (motor)
+		{
+			case LeftTrack -> send(determineByte(LEFTTRACK, speed));
+			case RightTrack -> send(determineByte(RIGHTTRACK, speed));
+			case Turret -> send(determineByte(TURRET, speed));
+			default -> System.out.println("! Error: setMotorSpeed not configured for MotorType " + motor);
+		}
+	}
+	
+	private void send(byte cmd)
+	{
+		byte[] b = { cmd };
+		
+		try
+		{
+			fos.write(b);
+		}
+		catch (IOException e)
+		{
+			System.out.println("Error: Failed to write byte.");
+		}
+	}
+	
+	private byte determineByte(byte track, int speed)
+	{
+		// adjust speed percentage to MAXSPEED resolution (also, s must be
+		// between 0 and -MAXSPEED / +MAXSPEED after this)
+		
+		if (speed == 0)
+		{
+			return (byte) (track + HALT);
+		}
+		else if (speed > 0 && speed <= (100 / MAXSPEED))
+		{
+			return (byte) (track + FORWARD + 1);
+		}
+		else if (speed < 0 && speed >= (-100 / MAXSPEED))
+		{
+			return (byte) (track + BACKWARD + 1);
+		}
+		else if (speed > 100 || speed < -100)
+		{
+			System.err.println("Error: Speed must be between -100 and 100!");
+			return (byte) (track + HALT);
+		}
+		else
+		{
+			speed = (int) ((double) speed / 100 * MAXSPEED);
+			if (speed < 0)
+			{
+				// make speed positive
+				speed *= -1;
+				
+				return (byte) (track + BACKWARD + speed);
+			}
+			else if (speed > 0)
+			{
+				return (byte) (track + FORWARD + speed);
+			}
+			else
+			{
+				System.err.println("Error: Something is wrong with your speed determining.");
+				return 0;
+			}
+		}
+	}
+	
+	public int readSensor(SensorPosition sensor)
+	{
+		switch (sensor)
+		{
+			case Right -> send(IR1);
+			case Middle -> send(IR2);
+			case Left -> send(IR3);
+			default -> System.out.println("! Error: readSensor not configured for SensorPosition " + sensor);
+		}
+		
+		// Get and return sensor output, convert unsigned byte to unsigned int
+		return Byte.toUnsignedInt(receive());
+	}
+	
+	private byte receive()
+	{
+		int value;
+		
+		try
+		{
+			value = fis.read();
+			if (value == -1)
+			{
+				throw new IOException("Unexpected EOF");
+			}
+		}
+		catch (IOException e)
+		{
+			System.out.println("Error: Receive failed.");
+			return (byte) -1; // Caller checks if (receive() & 0xFF) == 255 for error, assuming 255 isn't valid data
+		}
+		return (byte) value;
+	}
+}
