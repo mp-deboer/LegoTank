@@ -556,15 +556,11 @@ public class Tracks
 					if (nextEvent.equals(Event[0]))
 					{
 						xValue = data;
-						// Wait for next Event: setLeftYvalue
-						// checkForEvent(Event[1]);
 					}
 					// nextEvent == setLeftYvalue
 					else if (nextEvent.equals(Event[1]))
 					{
 						yValue = data;
-						// Wait for next Event: setLeftXvalue
-						// checkForEvent(Event[0]);
 					}
 					executeEvent();
 					cd.updateProcess(processID, getStateNr(currentState), getSensitives());
@@ -1086,15 +1082,11 @@ public class Tracks
 					if (nextEvent.equals(Event[0]))
 					{
 						xValue = data;
-						// Wait for next Event: setLeftYvalue
-						// checkForEvent(Event[1]);
 					}
 					// nextEvent == setLeftYvalue
 					else if (nextEvent.equals(Event[1]))
 					{
 						yValue = data;
-						// Wait for next Event: setLeftXvalue
-						// checkForEvent(Event[0]);
 					}
 					executeEvent();
 					cd.updateProcess(processID, getStateNr(currentState), getSensitives());
