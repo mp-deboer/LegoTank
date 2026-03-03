@@ -3,23 +3,24 @@
 This is a revival of a 2014 school project: a line-following robot built as a LEGO tank. The project runs on a Raspberry Pi for high-level control and a PIC microcontroller for low-level hardware interfacing. The tank supports manual control via either a PS3 or a PS5 controller, line following, sounds, and basic motor/sensor operations.
 
 ## Project Structure
-- **lts/**: Design and modeling files for concurrency and state machines. See [lts/README.md](./lts/README.md) for details on LTS files and the LTSA tool.
+
+- **ss/**: StateSmith visual state machine designs (`.drawio`) and auto-generation script (`build.csx`). See [ss/README.md](./ss/README.md).
+- **src/tankpack**: Java control software running on the Raspberry Pi. See [src/tankpack/README.md](./src/tankpack/README.md) for details on code structure, core classes, drivers, and StateSmith generated code + thin wrappers.
 - **src/Pibotica.X**: C firmware for the PIC microcontroller (PiBotica PCB). See [src/Pibotica.X/README.md](./src/Pibotica.X/README.md) for details on the firmware and microcontroller.
-- **src/tankpack**: Java control software running on the Raspberry Pi. See [src/tankpack/README.md](./src/tankpack/README.md) for details on code structure, core classes, drivers, logic, input handling, and utilities.
-- **sound/**: Audio resources (.wav files) for event-triggered sounds (e.g., tank shots, horns, connection chimes).
+- **sound/**: Audio resources (.wav files) for event-triggered sounds.
 - **Root files**:
-  - `Manifest.txt`: JAR manifest for packaging.
-  - `Makefile`: Build script for compiling Java and creating Tank.jar.
+    - `Manifest.txt`: JAR manifest for packaging.
+    - `Makefile`: Build script for compiling Java and creating Tank.jar.
 
 ## Dependencies
 Developed and tested on:
 - **Operating System**: Raspberry Pi OS (Legacy, 32-bit) Lite (Raspbian GNU/Linux 12 / Bookworm).
 - **Hardware**: Raspberry Pi Model 1 B (revision 2 board).
-- **Java Version**: OpenJDK 17.
+- **Java Version**: OpenJDK 17 (or higher).
 
 Required libraries:
 - **JInput**: 2.0.1 (for PS3/PS5 controller input; requires JUtils).
-- **libgpiod2**: 1.6.3 (required during runtime for setting the state of LED2)
+- **libgpiod2**: 1.6.3 (required at runtime for setting the state of LED2).
 
 ### SPI Configuration (required for HardwareDriver)
 The PIC firmware expects a SPI clock speed of 500 kHz.
@@ -50,7 +51,7 @@ As the default SPI clock speed cannot be set directly via `/boot/firmware/config
 6. Reboot:
 <pre><code>sudo reboot</code></pre>
 
-After this step, the SPI bus will default to 500 kHz, matching the speed of the PIC Firmware.
+After this step, the SPI bus will default to 500 kHz, matching the speed used by the PIC firmware.
 
 ## Building and Running
 1. Follow the SPI Configuration above.
@@ -64,3 +65,11 @@ After this step, the SPI bus will default to 500 kHz, matching the speed of the 
 - Motors: Three DC motors (left/right tracks, turret) controlled via PWM.
 - Controller: PS3 or PS5 via Bluetooth (using JInput).
 - LEDs: For feedback (e.g., when receiving PS3/PS5 input or when following a line).
+
+## Revival Status
+- v1.1 – Original 2014 baseline
+- v1.2 – PS5 controller support (USB)
+- v1.3 – Migrated to Raspberry Pi OS Bookworm + deadlock fix
+- **v2.0** – Full migration to StateSmith
+
+The old manual LTS-based state machines have been replaced with modern, visual, auto-generated code.
