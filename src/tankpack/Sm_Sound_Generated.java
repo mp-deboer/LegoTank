@@ -6,6 +6,21 @@ package tankpack;
 // Generated state machine
 public class Sm_Sound_Generated extends StateMachine
 {
+//  ////////////////////////////////////////////////////////////////////////////////
+    // Class code
+    ////////////////////////////////////////////////////////////////////////////////
+    
+    // Must be overridden by inheriting class
+    protected String pickSound()
+    {
+        return null;
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // End of class code
+    ////////////////////////////////////////////////////////////////////////////////
+
+
     public enum EventId
     {
         DO, // The `do` event is special. State event handlers do not consume this event (ancestors all get it too) unless a transition occurs.
@@ -186,10 +201,11 @@ public class Sm_Sound_Generated extends StateMachine
         this.stateId = StateId.PLAYING;
         
         // PLAYING behavior
-        // uml: enter / { updateProcess();\nds.playOneShot(soundId); }
+        // uml: enter / { updateProcess();\nsoundId = pickSound();\nds.playOneShot(soundId); }
         {
-            // Step 1: execute action `updateProcess();\nds.playOneShot(soundId);`
+            // Step 1: execute action `updateProcess();\nsoundId = pickSound();\nds.playOneShot(soundId);`
             updateProcess();
+            this.vars.soundId = pickSound();
             this.vars.ds.playOneShot(this.vars.soundId);
         } // end of behavior for PLAYING
     }

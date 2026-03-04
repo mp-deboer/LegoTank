@@ -63,7 +63,12 @@ public class Main
 		Sm_Sound[] singleSounds = new Sm_Sound[SingleSoundId.values().length];
 		for (int i = 0; i < SingleSoundId.values().length; i++)
 			singleSounds[i] = new Sm_Sound(dc, ds, SingleSoundId.values()[i], false);
-			
+		
+		// For each MultiSoundId, create a Sound object
+		Sm_Sound[] multiSounds = new Sm_Sound[MultiSoundId.values().length];
+		for (int i = 0; i < MultiSoundId.values().length; i++)
+			multiSounds[i] = new Sm_Sound(dc, ds, MultiSoundId.values()[i], false);
+		
 		// Initialise LineFollowing objects
 		// For each SensorPosition, create a Sensor object
 		Sm_Sensor[] sensors = new Sm_Sensor[SensorPosition.values().length];

@@ -4,9 +4,10 @@ public enum SingleSoundId
 {
 	BikeHorn("squarePressed", "bike_horn"),
 	CarChirp("trianglePressed", "car_chirp"),
-	Connected("foundController", "connected"),
+	Connected("foundController", "select-vehicle_ready"),
 	Disconnected("lostController", "disconnected"),
-	TankShot("circlePressed", "tank_shot");
+	TankShot("circlePressed", "tank_shot"),
+	WeaponReady("r3Pressed", "turret_ready");
 	
 	private final String triggerEvent;
 	private final String soundId;
