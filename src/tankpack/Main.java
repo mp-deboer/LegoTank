@@ -17,6 +17,7 @@ public class Main
 	private Driver_PsController dpc;
 	private Driver_Sound ds;
 	private Sm_LineFollower lF;
+	private Sm_Estop eStop;
 	
 	public static void main(String[] args)
 	{
@@ -93,6 +94,9 @@ public class Main
 		for (int i = 0; i < MotorType.values().length; i++)
 			motors[i] = new Sm_Motor(dc, dh, MotorType.values()[i], false);
 		
+		// And finally, initialise eStop
+		Sm_Estop eStop = new Sm_Estop(dc, false);
+		
 		// Done, print all registered processes and start DO loop
 		dc.printAllProcesses();
 		
@@ -102,6 +106,7 @@ public class Main
 		this.dpc = dpc;
 		this.ds = ds;
 		this.lF = lF;
+		this.eStop = eStop;
 		
 		// Add startup event, executed at first DO, triggering related sound
 		dc.addQueuedEvent("STARTUP", false);
@@ -127,10 +132,10 @@ public class Main
 		long end;
 		long duration;
 		
-		// Run until thread is interrupted
+		// Run until eStop or thread interrupt
 		try
 		{
-			while (!myThread.isInterrupted())
+			while (!eStop.vars.eStop && !myThread.isInterrupted())
 			{
 				if (sleepTime < 0)
 				{
