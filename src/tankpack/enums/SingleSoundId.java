@@ -9,7 +9,9 @@ public enum SingleSoundId
 	TankShot("circlePressed", "tank_shot"),
 	WeaponReady("r3Pressed", "turret_ready"),
 	Startup("startup", "startup"),
-	Shutdown("n/a", "shutdown"); // No event linked to shutdown, just load the sound
+	Shutdown("n/a", "shutdown"), // No event linked to shutdown, just load the sound
+	WifiConnected("wifiConnected", "wifi_connected"),
+	WifiDisconnected("wifiDisconnected", "wifi_disconnected");
 	
 	private final String triggerEvent;
 	private final String soundId;

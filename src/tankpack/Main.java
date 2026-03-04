@@ -41,6 +41,8 @@ public class Main
 		Driver_Sound ds = new Driver_Sound();
 		dh.initialise();
 		
+		Sm_WifiMngr wifi = new Sm_WifiMngr(dc, false);
+		
 		// Initialise PsController State Machine
 		Sm_PsController psController = new Sm_PsController(dc, dpc, false);
 		
