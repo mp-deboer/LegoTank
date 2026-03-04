@@ -12,6 +12,7 @@ public class Main
 	
 	// Objects shared between functions:
 	private Driver_Communication dc;
+	private Driver_Sound ds;
 	private Sm_LineFollower lF;
 	
 	public static void main(String[] args)
@@ -69,6 +70,8 @@ public class Main
 		for (int i = 0; i < MultiSoundId.values().length; i++)
 			multiSounds[i] = new Sm_Sound(dc, ds, MultiSoundId.values()[i], false);
 		
+		// Special sound state machine
+		Sm_Engine engine = new Sm_Engine(dc, ds, false);
 		// Initialise LineFollowing objects
 		// For each SensorPosition, create a Sensor object
 		Sm_Sensor[] sensors = new Sm_Sensor[SensorPosition.values().length];
@@ -90,6 +93,7 @@ public class Main
 		
 		// Save objects used at other functions locally
 		this.dc = dc;
+		this.ds = ds;
 		this.lF = lF;
 		
 		// Start GpioHandler
@@ -153,6 +157,7 @@ public class Main
 					System.out.printf("\r");
 				}
 				
+				ds.update(); // also call sound update every tick
 				dc.executeDoEvent();
 				
 				// Measure execution time

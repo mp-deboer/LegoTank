@@ -23,10 +23,11 @@ public class Sm_Motor_Generated extends StateMachine
     public enum EventId
     {
         DO, // The `do` event is special. State event handlers do not consume this event (ancestors all get it too) unless a transition occurs.
+        SETENGINESPEEDEVENT,
         SETSPEEDEVENT,
     }
     
-    public final int EventIdCount = 2;
+    public final int EventIdCount = 3;
     
     public enum StateId
     {
@@ -49,6 +50,7 @@ public class Sm_Motor_Generated extends StateMachine
         protected Driver_Hardware dh;
         protected int currentSpeed;
         protected int targetSpeed;
+        protected int engineSpeed = -1; // engineSpeed is disabled by default
         
         // Private variables, only used locally
     }
@@ -107,6 +109,7 @@ public class Sm_Motor_Generated extends StateMachine
                 switch (eventId)
                 {
                     case SETSPEEDEVENT: IDLE_setspeedevent(); break;
+                    case SETENGINESPEEDEVENT: IDLE_setenginespeedevent(); break;
                 }
                 break;
             
@@ -115,6 +118,7 @@ public class Sm_Motor_Generated extends StateMachine
                 switch (eventId)
                 {
                     case SETSPEEDEVENT: MOVING_setspeedevent(); break;
+                    case SETENGINESPEEDEVENT: MOVING_setenginespeedevent(); break;
                 }
                 break;
             
@@ -124,6 +128,7 @@ public class Sm_Motor_Generated extends StateMachine
                 {
                     case DO: RAMPING_do(); break;
                     case SETSPEEDEVENT: RAMPING_setspeedevent(); break;
+                    case SETENGINESPEEDEVENT: RAMPING_setenginespeedevent(); break;
                 }
                 break;
         }
@@ -183,19 +188,48 @@ public class Sm_Motor_Generated extends StateMachine
         this.stateId = StateId.ROOT;
     }
     
-    private void IDLE_setspeedevent()
+    private void IDLE_setenginespeedevent()
     {
         // IDLE behavior
-        // uml: setSpeedEvent [targetSpeed == 0] / { updateProcess(); }
-        if (this.vars.targetSpeed == 0)
+        // uml: (setSpeedEvent, setEngineSpeedEvent) [targetSpeed == 0 || engineSpeed == 0] / { updateProcess(); }
+        if (this.vars.targetSpeed == 0 || this.vars.engineSpeed == 0)
         {
             // Step 1: execute action `updateProcess();`
             updateProcess();
         } // end of behavior for IDLE
         
         // IDLE behavior
-        // uml: setSpeedEvent [targetSpeed != 0] TransitionTo(RAMPING)
-        if (this.vars.targetSpeed != 0)
+        // uml: (setSpeedEvent, setEngineSpeedEvent) [engineSpeed != 0 && targetSpeed != 0] TransitionTo(RAMPING)
+        if (this.vars.engineSpeed != 0 && this.vars.targetSpeed != 0)
+        {
+            // Step 1: Exit states until we reach `ROOT` state (Least Common Ancestor for transition).
+            IDLE_exit();
+            
+            // Step 2: Transition action: ``.
+            
+            // Step 3: Enter/move towards transition target `RAMPING`.
+            RAMPING_enter();
+            
+            // Step 4: complete transition. Ends event dispatch. No other behaviors are checked.
+            return;
+        } // end of behavior for IDLE
+        
+        // No ancestor handles this event.
+    }
+    
+    private void IDLE_setspeedevent()
+    {
+        // IDLE behavior
+        // uml: (setSpeedEvent, setEngineSpeedEvent) [targetSpeed == 0 || engineSpeed == 0] / { updateProcess(); }
+        if (this.vars.targetSpeed == 0 || this.vars.engineSpeed == 0)
+        {
+            // Step 1: execute action `updateProcess();`
+            updateProcess();
+        } // end of behavior for IDLE
+        
+        // IDLE behavior
+        // uml: (setSpeedEvent, setEngineSpeedEvent) [engineSpeed != 0 && targetSpeed != 0] TransitionTo(RAMPING)
+        if (this.vars.engineSpeed != 0 && this.vars.targetSpeed != 0)
         {
             // Step 1: Exit states until we reach `ROOT` state (Least Common Ancestor for transition).
             IDLE_exit();
@@ -234,10 +268,30 @@ public class Sm_Motor_Generated extends StateMachine
         this.stateId = StateId.ROOT;
     }
     
+    private void MOVING_setenginespeedevent()
+    {
+        // MOVING behavior
+        // uml: (setSpeedEvent, setEngineSpeedEvent) [currentSpeed == targetSpeed] / { updateProcess(); }
+        if (this.vars.currentSpeed == this.vars.targetSpeed)
+        {
+            // Step 1: execute action `updateProcess();`
+            updateProcess();
+        } // end of behavior for MOVING
+        
+        // MOVING behavior
+        // uml: setEngineSpeedEvent / { updateProcess(); }
+        {
+            // Step 1: execute action `updateProcess();`
+            updateProcess();
+        } // end of behavior for MOVING
+        
+        // No ancestor handles this event.
+    }
+    
     private void MOVING_setspeedevent()
     {
         // MOVING behavior
-        // uml: setSpeedEvent [currentSpeed == targetSpeed] / { updateProcess(); }
+        // uml: (setSpeedEvent, setEngineSpeedEvent) [currentSpeed == targetSpeed] / { updateProcess(); }
         if (this.vars.currentSpeed == this.vars.targetSpeed)
         {
             // Step 1: execute action `updateProcess();`
@@ -329,10 +383,22 @@ public class Sm_Motor_Generated extends StateMachine
         // No ancestor handles this event.
     }
     
+    private void RAMPING_setenginespeedevent()
+    {
+        // RAMPING behavior
+        // uml: (setSpeedEvent, setEngineSpeedEvent) / { updateProcess(); }
+        {
+            // Step 1: execute action `updateProcess();`
+            updateProcess();
+        } // end of behavior for RAMPING
+        
+        // No ancestor handles this event.
+    }
+    
     private void RAMPING_setspeedevent()
     {
         // RAMPING behavior
-        // uml: setSpeedEvent / { updateProcess(); }
+        // uml: (setSpeedEvent, setEngineSpeedEvent) / { updateProcess(); }
         {
             // Step 1: execute action `updateProcess();`
             updateProcess();
@@ -360,6 +426,7 @@ public class Sm_Motor_Generated extends StateMachine
         switch (id)
         {
             case DO: return "DO";
+            case SETENGINESPEEDEVENT: return "SETENGINESPEEDEVENT";
             case SETSPEEDEVENT: return "SETSPEEDEVENT";
             default: return "?";
         }
@@ -372,9 +439,9 @@ public class Sm_Motor_Generated extends StateMachine
     protected String[] getAllowedEvents(StateId id) {
         return switch (id) {
             case ROOT -> new String[0];  // No events
-            case IDLE -> new String[]{"SETSPEEDEVENT"};
-            case MOVING -> new String[]{"SETSPEEDEVENT"};
-            case RAMPING -> new String[]{"DO", "SETSPEEDEVENT"};
+            case IDLE -> new String[]{"SETSPEEDEVENT", "SETENGINESPEEDEVENT"};
+            case MOVING -> new String[]{"SETSPEEDEVENT", "SETENGINESPEEDEVENT"};
+            case RAMPING -> new String[]{"DO", "SETSPEEDEVENT", "SETENGINESPEEDEVENT"};
             default -> new String[0];
         };
     }

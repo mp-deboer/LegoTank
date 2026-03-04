@@ -33,7 +33,7 @@ public class Sm_Sound extends Sm_Sound_Generated
 		super.vars.ds = ds;
 		
 		// Preload sounds
-		Driver_Sound.preload(sounds);
+		Driver_Sound.preload(false, sounds);
 		
 		// Define custom trigger event, assert upper case
 		this.triggerName = triggerName.toUpperCase();

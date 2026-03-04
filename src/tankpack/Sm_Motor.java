@@ -8,9 +8,11 @@ public class Sm_Motor extends Sm_Motor_Generated
 	private final long MAXSPEEDINCREASEPERSECOND = 20L; // in percent / second
 	
 	private String speedEvent;
+	private String engineEvent;
 	private MotorType motorType;
 	
 	private int maxSpeedStep;
+	private int sign = 1; // sign is -1 or 1, used to convert engineSpeed to targetSpeed
 	
 	public Sm_Motor(Driver_Communication dc, Driver_Hardware dh, MotorType m, boolean debug)
 	{
@@ -22,6 +24,7 @@ public class Sm_Motor extends Sm_Motor_Generated
 		
 		// Define custom trigger events, assert upper case
 		speedEvent = m.getSpeedEvent().toUpperCase();
+		engineEvent = m.getEngineEvent().toUpperCase();
 		
 		// Calculate max speed steps
 		maxSpeedStep = (int) (MAXSPEEDINCREASEPERSECOND * Main.DOPERIOD / 1000L);
@@ -43,6 +46,8 @@ public class Sm_Motor extends Sm_Motor_Generated
 		
 		if (baseName.equals("SETSPEEDEVENT"))
 			translatedName = speedEvent;
+		else if (baseName.equals("SETENGINESPEEDEVENT"))
+			translatedName = engineEvent;
 		
 		return translatedName;
 	}
@@ -54,6 +59,8 @@ public class Sm_Motor extends Sm_Motor_Generated
 		
 		if (eventName.equals(speedEvent))
 			translatedName = "SETSPEEDEVENT";
+		else if (eventName.equals(engineEvent))
+			translatedName = "SETENGINESPEEDEVENT";
 		
 		return translatedName;
 	}
@@ -61,10 +68,20 @@ public class Sm_Motor extends Sm_Motor_Generated
 	@Override
 	protected void dispatchEvent(String eventName, int eventData)
 	{
-		// Forward eventData to targetSpeed
+		// Forward eventData to target- or engineSpeed
 		if (eventName.equals(speedEvent))
 		{
 			super.vars.targetSpeed = eventData;
+			
+			// Correct sign based on targetSpeed
+			if (eventData > 0)
+				sign = 1;
+			else if (eventData < 0)
+				sign = -1;
+		}
+		else if (eventName.equals(engineEvent))
+		{
+			super.vars.engineSpeed = eventData;
 		}
 		
 		super.dispatchEvent(eventName);
@@ -73,7 +90,14 @@ public class Sm_Motor extends Sm_Motor_Generated
 	@Override
 	protected void adjustSpeed()
 	{
-		int targetSpeed = super.vars.targetSpeed;
+		int targetSpeed;
+		if (super.vars.targetSpeed != 0 && super.vars.engineSpeed >= 0)
+		{
+			// EngineSpeed enabled, correct direction, sign is set at dispatchEvent(speedEvent)
+			targetSpeed = sign * super.vars.engineSpeed;
+		}
+		else // EngineSpeed disabled / -1, use the default targetSpeed
+			targetSpeed = super.vars.targetSpeed;
 		
 		if (super.vars.currentSpeed != targetSpeed)
 		{
