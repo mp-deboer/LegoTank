@@ -184,6 +184,7 @@ public class Driver_Sound
 		String id;
 		float targetGainDB;
 		float currentGainDB;
+		float maxGainDB;
 		float fadeStep;
 		
 		ActiveSound(Clip clip, String id, float startGainDB)
@@ -192,6 +193,7 @@ public class Driver_Sound
 			this.id = id;
 			this.currentGainDB = startGainDB;
 			this.targetGainDB = startGainDB;
+			this.maxGainDB = MAX_GAIN_DB;
 			this.fadeStep = MAX_GAIN_DB - MIN_GAIN_DB; // set to max by default
 			setVolume();
 		}
@@ -208,16 +210,28 @@ public class Driver_Sound
 		// Apply fadeStep and set volume
 		void updateVolume()
 		{
-			if (currentGainDB != targetGainDB)
+			float targetGain;
+			
+			// Limit targetGain to maxGain if set & assert it is within limits
+			if (maxGainDB < MAX_GAIN_DB && maxGainDB != SILENT)
 			{
-				currentGainDB = calculateNextGain(currentGainDB, targetGainDB, fadeStep);
+				// Upper limit (maxGainDB) is active
+				targetGain = Math.min(targetGainDB, maxGainDB);
+				targetGain = Math.max(targetGain, MIN_GAIN_DB); // never go below MIN
+			}
+			else // maxGain is not set
+				targetGain = targetGainDB;
+			
+			if (currentGainDB != targetGain)
+			{
+				currentGainDB = calculateNextGain(currentGainDB, targetGain, fadeStep);
 				
 				if (debug)
-					if (currentGainDB == targetGainDB) // separate if statement to fix "dead code" warning
+					if (currentGainDB == targetGain) // separate if statement to fix "dead code" warning
 						System.out.println("Volume of '" + this.id + "' reached target: " + currentGainDB);
 					
 				if (highDebug)
-					if (currentGainDB != targetGainDB) // separate if statement to fix "dead code" warning
+					if (currentGainDB != targetGain) // separate if statement to fix "dead code" warning
 						System.out.printf("Volume of '%s' set to: %.2f; fadeStep = %.2f\n", id, currentGainDB,
 								fadeStep);
 					
@@ -225,10 +239,11 @@ public class Driver_Sound
 			}
 			
 			// Snap to SILENT once currentGainDB is at (or below) MIN
-			if ((currentGainDB != SILENT) && (currentGainDB <= MIN_GAIN_DB) && (targetGainDB <= MIN_GAIN_DB))
+			if ((currentGainDB != SILENT) && (currentGainDB <= MIN_GAIN_DB) && (targetGain <= MIN_GAIN_DB))
 			{
 				currentGainDB = SILENT;
 				targetGainDB = SILENT;
+				maxGainDB = SILENT;
 				setVolume();
 				
 				if (debug)
@@ -310,6 +325,27 @@ public class Driver_Sound
 					// Update and set volume
 					as.updateVolume();
 				}
+				return;
+			}
+		}
+	}
+	
+	public void setMaxVolume(String soundId, float percentage)
+	{
+		// If active, calculate and set max gain
+		for (ActiveSound as : activeSounds)
+		{
+			if (as.id.equals(soundId))
+			{
+				// Assert percentage is within limits
+				percentage = Math.max(0f, Math.min(100f, percentage));
+				
+				// Calculate GAIN based on MIN, MAX and percentage
+				as.maxGainDB = MIN_GAIN_DB + ((percentage / 100f) * (MAX_GAIN_DB - MIN_GAIN_DB));
+				
+				if (debug)
+					System.out.println("Set max gain of '" + soundId + "' to: " + as.maxGainDB);
+				
 				return;
 			}
 		}

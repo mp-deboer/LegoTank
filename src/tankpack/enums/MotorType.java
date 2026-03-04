@@ -4,7 +4,7 @@ public enum MotorType
 {
 	LeftTrack("setSpeedLeft", "engineSpeed"),
 	RightTrack("setSpeedRight", "engineSpeed"),
-	Turret("setSpeedTurret", "n/a");
+	Turret("setSpeedTurret", "turretSpeed");
 	
 	private final String speedEvent;
 	private final String engineEvent;

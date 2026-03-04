@@ -70,8 +70,10 @@ public class Main
 		for (int i = 0; i < MultiSoundId.values().length; i++)
 			multiSounds[i] = new Sm_Sound(dc, ds, MultiSoundId.values()[i], false);
 		
-		// Special sound state machine
+		// Special sound state machines
 		Sm_Engine engine = new Sm_Engine(dc, ds, false);
+		Sm_TurretDrive turretDrive = new Sm_TurretDrive(dc, ds, false);
+		
 		// Initialise LineFollowing objects
 		// For each SensorPosition, create a Sensor object
 		Sm_Sensor[] sensors = new Sm_Sensor[SensorPosition.values().length];
