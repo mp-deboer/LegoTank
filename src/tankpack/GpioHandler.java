@@ -9,9 +9,12 @@ import tankpack.util.BashCmd.BashResult;
 public class GpioHandler extends Thread
 {
 	private final boolean debug;
+	private final int pinBtn;
 	private final int pinLed2;
+	private final long pollIntervalMs;
 	
 	// Shared state: use volatile for visibility across threads
+	private volatile boolean currentButtonState = false;
 	private volatile boolean desiredLed2State = false;
 	
 	// Make sure LED2 is off upon start (this also creates a reference to the LED process)
@@ -25,10 +28,12 @@ public class GpioHandler extends Thread
 	
 	private BashCmd bashCmd;
 	
-	public GpioHandler(int pinLed2, boolean debug)
+	public GpioHandler(int pinBtn, int pinLed2, boolean debug)
 	{
+		this.pinBtn = pinBtn;
 		this.pinLed2 = pinLed2;
 		this.debug = debug;
+		this.pollIntervalMs = 200L; // set to 200ms polling
 		this.setName("GpioHandlerThread");
 		
 		bashCmd = new BashCmd(debug);
@@ -41,6 +46,9 @@ public class GpioHandler extends Thread
 		{
 			try
 			{
+				// Poll button state synchronously
+				currentButtonState = getGpioState(pinBtn);
+				
 				// Check and apply LED2 state change if needed
 				if (led2StateChanged)
 				{
@@ -49,8 +57,8 @@ public class GpioHandler extends Thread
 					led2StateChanged = false;
 				}
 				
-				// Sleep 200ms
-				Thread.sleep(200);
+				// Sleep for next poll cycle
+				Thread.sleep(pollIntervalMs);
 			}
 			catch (InterruptedException e)
 			{
@@ -60,6 +68,12 @@ public class GpioHandler extends Thread
 		
 		// Cleanup on shutdown
 		killGpioProcess(currentLed2Process, pinLed2);
+	}
+	
+	// Public getter for button state (read by Driver_Hardware.getButtonState())
+	public boolean getButtonState()
+	{
+		return currentButtonState;
 	}
 	
 	// Public setter for LED2 state (called by Driver_Hardware.setLed2On/Off())
@@ -152,5 +166,36 @@ public class GpioHandler extends Thread
 		}
 		
 		return null;
+	}
+	
+	// Function to get state of BTN via Bash command
+	private boolean getGpioState(int pin)
+	{
+		String command = "gpioget -l --numeric -c gpiochip0 " + pin;
+		
+		try
+		{
+			// Execute bash command and wait for completion
+			BashResult result = bashCmd.executeBashCommand(command, true);
+			
+			// Return true if stdout equals to "1"
+			if (!result.stdout().isEmpty())
+				return result.stdout().get(0).equals("1");
+			else // empty stdout, return false
+				return false;
+		}
+		catch (IOException | InterruptedException e)
+		{
+			// ignore if interrupt
+			// Thread.currentThread().interrupt(); // Propagate interrupt
+			
+			if (!(e instanceof InterruptedException))
+			{
+				System.err.println("! Error (getGpioState): " + e.getMessage());
+				e.printStackTrace();
+			}
+		}
+		
+		return false;
 	}
 }

@@ -12,9 +12,10 @@ public class Sm_Estop_Generated extends StateMachine
         PS_BUTTONPRESSED,
         PS_BUTTONRELEASED,
         R1PRESSED,
+        SHUTDOWN,
     }
     
-    public final int EventIdCount = 4;
+    public final int EventIdCount = 5;
     
     public enum StateId
     {
@@ -113,6 +114,7 @@ public class Sm_Estop_Generated extends StateMachine
                     case PS_BUTTONRELEASED: NORMAL_ps_buttonreleased(); break;
                     case R1PRESSED: NORMAL_r1pressed(); break;
                     case PS_BUTTONPRESSED: NORMAL_ps_buttonpressed(); break;
+                    case SHUTDOWN: NORMAL_shutdown(); break;
                 }
                 break;
         }
@@ -331,6 +333,26 @@ public class Sm_Estop_Generated extends StateMachine
         // No ancestor handles this event.
     }
     
+    private void NORMAL_shutdown()
+    {
+        // NORMAL behavior
+        // uml: shutdown TransitionTo(ESTOP)
+        {
+            // Step 1: Exit states until we reach `ROOT` state (Least Common Ancestor for transition).
+            NORMAL_exit();
+            
+            // Step 2: Transition action: ``.
+            
+            // Step 3: Enter/move towards transition target `ESTOP`.
+            ESTOP_enter();
+            
+            // Step 4: complete transition. Ends event dispatch. No other behaviors are checked.
+            return;
+        } // end of behavior for NORMAL
+        
+        // No ancestor handles this event.
+    }
+    
     // Thread safe.
     public static String stateIdToString(StateId id)
     {
@@ -353,6 +375,7 @@ public class Sm_Estop_Generated extends StateMachine
             case PS_BUTTONPRESSED: return "PS_BUTTONPRESSED";
             case PS_BUTTONRELEASED: return "PS_BUTTONRELEASED";
             case R1PRESSED: return "R1PRESSED";
+            case SHUTDOWN: return "SHUTDOWN";
             default: return "?";
         }
     }
@@ -366,7 +389,7 @@ public class Sm_Estop_Generated extends StateMachine
             case ROOT -> new String[0];  // No events
             case ALERT -> new String[]{"PS_BUTTONPRESSED", "PS_BUTTONRELEASED", "R1PRESSED", "ESTOP"};
             case ESTOP -> new String[]{"DO"};
-            case NORMAL -> new String[]{"PS_BUTTONRELEASED", "R1PRESSED", "PS_BUTTONPRESSED"};
+            case NORMAL -> new String[]{"PS_BUTTONRELEASED", "R1PRESSED", "PS_BUTTONPRESSED", "SHUTDOWN"};
             default -> new String[0];
         };
     }

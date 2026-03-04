@@ -12,8 +12,9 @@ public class Driver_Hardware
 {
 	private final boolean debug = false;
 	
-	// define LED2 constants
+	// define GPIO constants
 	private final int PIN_LED2 = 18; // GPIO_1 / wPi = 1; BCM = 18
+	private final int PIN_BTN = 4; // GPIO_7 / wPi = 7; BCM = 4
 	
 	// define LED1 constants
 	private final byte LED1ON = (byte) 10;
@@ -35,7 +36,7 @@ public class Driver_Hardware
 	private final byte IR3 = (byte) 3;
 	
 	// Own variables
-	private GpioHandler gpioHandler = new GpioHandler(PIN_LED2, debug);
+	private GpioHandler gpioHandler = new GpioHandler(PIN_BTN, PIN_LED2, debug);
 	FileOutputStream fos;
 	FileInputStream fis;
 	
@@ -146,7 +147,7 @@ public class Driver_Hardware
 	}
 	
 	////////////////////////////////////////////////////////////////////////////////
-	// LED2 functions
+	// Button & LED2 functions
 	////////////////////////////////////////////////////////////////////////////////
 	
 	public void setLed2Off()
@@ -157,6 +158,11 @@ public class Driver_Hardware
 	public void setLed2On()
 	{
 		gpioHandler.setDesiredLed2State(true);
+	}
+	
+	public boolean getButtonState()
+	{
+		return gpioHandler.getButtonState();
 	}
 	
 	////////////////////////////////////////////////////////////////////////////////

@@ -90,6 +90,7 @@ public class Main
 		// Initialise hardware objects
 		Sm_Led1 led1 = new Sm_Led1(dc, dh, false);
 		Sm_Led2 led2 = new Sm_Led2(dc, dh, false);
+		Sm_GpioButton btn = new Sm_GpioButton(dc, dh, false);
 		
 		// For each MotorType, create a Motor object
 		Sm_Motor[] motors = new Sm_Motor[MotorType.values().length];

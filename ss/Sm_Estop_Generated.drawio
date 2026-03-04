@@ -49,8 +49,16 @@
             <mxPoint as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="QvzzAOXKp3-CQ_KCjpsm-3" parent="1" style="shape=note;strokeWidth=2;fontSize=14;size=20;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=light-dark(#000000,#000000);align=left;spacingLeft=5;labelBorderColor=none;labelBackgroundColor=none;whiteSpace=wrap;" value="eStop is set to true when the PS-button combination PS + R1 is pressed" vertex="1">
-          <mxGeometry height="80" width="230" x="960" as="geometry" />
+        <mxCell id="QvzzAOXKp3-CQ_KCjpsm-1" edge="1" parent="1" source="gXIQXWJeLBFqDzgiwE1A-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;" target="xDdmSG1C8cU7usb96epK-1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="QvzzAOXKp3-CQ_KCjpsm-2" connectable="0" parent="QvzzAOXKp3-CQ_KCjpsm-1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="shutdown" vertex="1">
+          <mxGeometry relative="1" x="-0.2178" y="3" as="geometry">
+            <mxPoint x="-3" y="-56" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="QvzzAOXKp3-CQ_KCjpsm-3" parent="1" style="shape=note;strokeWidth=2;fontSize=14;size=20;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=light-dark(#000000,#000000);align=left;spacingLeft=5;labelBorderColor=none;labelBackgroundColor=none;whiteSpace=wrap;" value="eStop is set to true upon event &quot;shutdown&quot;* or when the PS-button combination PS + R1 is pressed&#xa;&#xa;*eStop and shutdown have similar behavior" vertex="1">
+          <mxGeometry height="120" width="230" x="960" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
