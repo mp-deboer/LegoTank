@@ -93,6 +93,7 @@ local.properties
 ### Draw.io ###
 # Backup files
 *.drawio.bkp
+*.drawio.svg.bkp
 
 ### Windows ###
 # Windows thumbnail cache files

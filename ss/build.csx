@@ -1,5 +1,5 @@
 #!/usr/bin/env dotnet-script
-#r "nuget: StateSmith, 0.19.0-alpha-1"
+#r "nuget: StateSmith, 0.19.0"
 
 using StateSmith.Common;
 using StateSmith.Input.Expansions;
@@ -17,17 +17,18 @@ string currentDirectory = Directory.GetCurrentDirectory();
 string targetPath = Path.GetFullPath(Path.Combine(currentDirectory, "..", "src", "tankpack"));
 
 // Generate code for all state machines automatically
-var drawioFiles = Directory.GetFiles(currentDirectory, "*.drawio");
+var drawioFiles = Directory.GetFiles(currentDirectory, "*.drawio.svg");
 
 foreach (var fullPath in drawioFiles)
 {
-    string baseName = Path.GetFileNameWithoutExtension(fullPath);
+    // Strip .svg, then .drawio
+    string baseName = Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(fullPath));
     GenerateStateMachineCode(baseName);
 }
 
 void GenerateStateMachineCode(string ssName)
 {
-    string drawioFileName = ssName + ".drawio";
+    string drawioFileName = ssName + ".drawio.svg";
     string javaFileName = ssName + ".java";
     
     // Get full paths (adjust if Draw.io path differs from current directory)
