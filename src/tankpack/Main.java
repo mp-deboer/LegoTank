@@ -1,8 +1,10 @@
 package tankpack;
 
+import java.io.IOException;
 import java.lang.Math;
 
 import tankpack.enums.*;
+import tankpack.util.BashCmd;
 
 public class Main
 {
@@ -234,6 +236,24 @@ public class Main
 		long end = System.currentTimeMillis();
 		
 		System.out.println("- Done, time taken: " + (end - start) + "ms");
+		
+		// Actually shutdown if not running in debug mode and not stopped via Ctrl+C
+		if (!debug && !shutdownHook)
+		{
+			try
+			{
+				new BashCmd(true).executeBashCommand("sudo shutdown -h now", true);
+			}
+			catch (IOException | InterruptedException e)
+			{
+				// ignore if interrupt
+				if (!(e instanceof InterruptedException))
+				{
+					System.err.println("! Error (shutdown): " + e.getMessage());
+					e.printStackTrace();
+				}
+			}
+		}
 	}
 	
 	private void addShutdownHook(Thread myThread)
