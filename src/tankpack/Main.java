@@ -34,6 +34,7 @@ public class Main
 		Driver_PsController dpc = new Driver_PsController();
 		Driver_Hardware dh = new Driver_Hardware();
 		Driver_Sound ds = new Driver_Sound();
+		dh.initialise();
 		
 		// Initialise PsController State Machine
 		Sm_PsController psController = new Sm_PsController(dc, dpc, false);

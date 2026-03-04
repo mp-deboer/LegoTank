@@ -41,15 +41,49 @@ public class Driver_Hardware
 	
 	public Driver_Hardware()
 	{
+	}
+	
+	public void initialise()
+	{
+		// Initialise SPI channel with retry
+		int retryDelayMs = 1000; // wait time between attempts
+		int attempt = 0;
 		File spiDev = new File("/dev/spidev0.0");
-		try
+		
+		while (true)
 		{
-			fos = new FileOutputStream(spiDev);
-			fis = new FileInputStream(spiDev);
-		}
-		catch (FileNotFoundException e)
-		{
-			System.out.println("Failed to open SPI device");
+			try
+			{
+				if (spiDev.exists())
+				{
+					fos = new FileOutputStream(spiDev);
+					fis = new FileInputStream(spiDev);
+					System.out.println("SPI channel " + spiDev.getPath() + " opened successfully.");
+					break; // success → exit loop
+				}
+				else
+				{
+					attempt++;
+					System.out.println("SPI device not found yet (attempt " + attempt + "). Retrying in " + retryDelayMs
+							+ "ms...");
+				}
+			}
+			catch (FileNotFoundException e)
+			{
+				attempt++;
+				System.out.println(
+						"SPI device not ready yet (attempt " + attempt + "). Retrying in " + retryDelayMs + "ms...");
+			}
+			
+			try
+			{
+				Thread.sleep(retryDelayMs);
+			}
+			catch (InterruptedException ie)
+			{
+				Thread.currentThread().interrupt(); // Propagate interrupt
+				throw new RuntimeException("Interrupted while trying to open SPI device", ie);
+			}
 		}
 	}
 	
