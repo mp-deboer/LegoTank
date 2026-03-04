@@ -7,7 +7,8 @@ public enum SingleSoundId
 	Connected("foundController", "select-vehicle_ready"),
 	Disconnected("lostController", "disconnected"),
 	TankShot("circlePressed", "tank_shot"),
-	WeaponReady("r3Pressed", "turret_ready");
+	WeaponReady("r3Pressed", "turret_ready"),
+	Startup("startup", "startup");
 	
 	private final String triggerEvent;
 	private final String soundId;

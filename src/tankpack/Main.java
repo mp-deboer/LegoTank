@@ -98,6 +98,9 @@ public class Main
 		this.ds = ds;
 		this.lF = lF;
 		
+		// Add startup event, executed at first DO, triggering related sound
+		dc.addQueuedEvent("STARTUP", false);
+		
 		// Start GpioHandler
 		dh.start();
 		
