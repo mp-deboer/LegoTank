@@ -9,9 +9,12 @@ public class Main
 	public static final long DOPERIOD = 100L; // changing this requires recompiling all
 	private static boolean debug; // set via argument
 	private boolean lfOn = false;
+	private boolean shutdownHook = false;
 	
 	// Objects shared between functions:
 	private Driver_Communication dc;
+	private Driver_Hardware dh;
+	private Driver_PsController dpc;
 	private Driver_Sound ds;
 	private Sm_LineFollower lF;
 	
@@ -95,6 +98,8 @@ public class Main
 		
 		// Save objects used at other functions locally
 		this.dc = dc;
+		this.dh = dh;
+		this.dpc = dpc;
 		this.ds = ds;
 		this.lF = lF;
 		
@@ -110,6 +115,11 @@ public class Main
 	
 	private void timedFireDoEvent()
 	{
+		// First, get reference to current thread and add a CTRL-C hook
+		Thread myThread = Thread.currentThread();
+		addShutdownHook(myThread);
+		
+		// Then, initialise and start (interruptible) DO loop
 		long period = DOPERIOD;
 		long sleepTime = period;
 		
@@ -117,9 +127,10 @@ public class Main
 		long end;
 		long duration;
 		
+		// Run until thread is interrupted
 		try
 		{
-			while (true)
+			while (!myThread.isInterrupted())
 			{
 				if (sleepTime < 0)
 				{
@@ -178,10 +189,72 @@ public class Main
 			System.out.println(e.getMessage());
 		}
 		
+		shutdown();
+		
 		// In case we do not exit, there is probably a thread still running, use the code below to identify the threads
 		// that are still running (threads with daemon = false are the culprit)
 		
 		// Thread.getAllStackTraces().forEach((thread, stack) -> System.out
 		// .println(thread.getName() + " daemon: " + thread.isDaemon() + " stack: " + Arrays.toString(stack)));
+	}
+	
+	private void shutdown()
+	{
+		long start = System.currentTimeMillis();
+		
+		System.out.println();
+		System.out.println("Shutting down:");
+		System.out.println("- Playing shutdown sound");
+		ds.playOneShot("shutdown");
+		
+		System.out.println("- Calling Hardware driver shutdown.");
+		dh.shutdown();
+		
+		System.out.println("- Calling PsController driver shutdown.");
+		dpc.shutdown();
+		
+		System.out.println("- Calling Sound driver shutdown.");
+		ds.shutdown();
+		
+		System.out.println("- Calling Communication driver shutdown.");
+		dc.shutdown();
+		
+		System.out.println("- Waiting for shutdown sound to finish.");
+		while (ds.isPlaying("shutdown"))
+			simplySleep(10L);
+		
+		long end = System.currentTimeMillis();
+		
+		System.out.println("- Done, time taken: " + (end - start) + "ms");
+	}
+	
+	private void addShutdownHook(Thread myThread)
+	{
+		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+			System.out.println("Shutdown hook triggered.");
+			shutdownHook = true;
+			
+			myThread.interrupt();
+			try
+			{
+				// Wait max 15 seconds to allow for a graceful shutdown
+				myThread.join(15000);
+			}
+			catch (InterruptedException ignored)
+			{
+			}
+		}));
+	}
+	
+	// Sleep without requiring try/catch
+	private void simplySleep(long millis)
+	{
+		try
+		{
+			Thread.sleep(millis);
+		}
+		catch (InterruptedException ignored)
+		{
+		}
 	}
 }

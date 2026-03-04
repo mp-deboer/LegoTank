@@ -8,7 +8,8 @@ public enum SingleSoundId
 	Disconnected("lostController", "disconnected"),
 	TankShot("circlePressed", "tank_shot"),
 	WeaponReady("r3Pressed", "turret_ready"),
-	Startup("startup", "startup");
+	Startup("startup", "startup"),
+	Shutdown("n/a", "shutdown"); // No event linked to shutdown, just load the sound
 	
 	private final String triggerEvent;
 	private final String soundId;

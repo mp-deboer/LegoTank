@@ -20,6 +20,9 @@ public class GpioHandler extends Thread
 	// Current LED2 process (to kill when changing state)
 	private Process currentLed2Process = null;
 	
+	// Shutdown flag
+	private volatile boolean shutdownRequested = false;
+	
 	private BashCmd bashCmd;
 	
 	public GpioHandler(int pinLed2, boolean debug)
@@ -34,7 +37,7 @@ public class GpioHandler extends Thread
 	@Override
 	public void run()
 	{
-		while (true)
+		while (!shutdownRequested)
 		{
 			try
 			{
@@ -54,6 +57,9 @@ public class GpioHandler extends Thread
 				// Ignore, only stop upon shutdownRequested
 			}
 		}
+		
+		// Cleanup on shutdown
+		killGpioProcess(currentLed2Process, pinLed2);
 	}
 	
 	// Public setter for LED2 state (called by Driver_Hardware.setLed2On/Off())
@@ -64,6 +70,13 @@ public class GpioHandler extends Thread
 			desiredLed2State = state;
 			led2StateChanged = true;
 		}
+	}
+	
+	// Request shutdown (called from Driver_Hardware.shutdown())
+	public void requestShutdown()
+	{
+		shutdownRequested = true;
+		this.interrupt(); // Interrupt sleep if waiting
 	}
 	
 	////////////////////////////////////////////////////////////////////////////////

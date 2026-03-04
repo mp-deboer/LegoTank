@@ -93,6 +93,58 @@ public class Driver_Hardware
 		gpioHandler.start();
 	}
 	
+	public void shutdown()
+	{
+		// Set speed of all motors to 0
+		for (int i = 0; i < MotorType.values().length; i++)
+			setMotorSpeed(MotorType.values()[i], 0);
+		
+		// Turn LEDs off
+		setLed1Off();
+		setLed2Off();
+		
+		// Close SPI streams
+		try
+		{
+			fos.close();
+			fis.close();
+		}
+		catch (IOException e)
+		{
+			System.out.println("Error: Failed to close SPI streams.");
+		}
+		
+		// Wait for LED2 off to take effect
+		simplySleep(500L);
+		
+		// To allow a clean shutdown, shutdown GPIO handler as well
+		gpioHandler.requestShutdown();
+		try
+		{
+			gpioHandler.join();
+		}
+		catch (InterruptedException e)
+		{
+			Thread.currentThread().interrupt(); // Propagate interrupt
+		}
+		
+		if (debug)
+			System.out.println("Hardware shutdown complete.");
+	}
+	
+	// Sleep without requiring try/catch
+	private void simplySleep(long millis)
+	{
+		try
+		{
+			Thread.sleep(millis);
+		}
+		catch (InterruptedException e)
+		{
+			Thread.currentThread().interrupt(); // Propagate interrupt
+		}
+	}
+	
 	////////////////////////////////////////////////////////////////////////////////
 	// LED2 functions
 	////////////////////////////////////////////////////////////////////////////////

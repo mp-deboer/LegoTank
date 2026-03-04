@@ -92,6 +92,54 @@ public class Driver_Sound
 		}
 	}
 	
+	public void shutdown()
+	{
+		// Stop and close looping sounds
+		for (ActiveSound as : activeSounds)
+		{
+			if (as.clip.isRunning())
+			{
+				as.clip.stop();
+			}
+			as.clip.close();
+			
+			if (debug)
+				System.out.println("Stopped and closed looping clip: " + as.id);
+		}
+		
+		// Stop and close one-shot clips, excluding "shutdown"
+		Iterator<Map.Entry<String, Clip>> it = clips.entrySet().iterator();
+		while (it.hasNext())
+		{
+			Map.Entry<String, Clip> entry = it.next();
+			String id = entry.getKey();
+			Clip clip = entry.getValue();
+			
+			// Skip shutdown one-shot-clip
+			if (!id.equals("shutdown"))
+			{
+				if (clip.isRunning())
+				{
+					clip.stop();
+				}
+				clip.close();
+				it.remove();
+				
+				if (debug)
+					System.out.println("Stopped and closed one-shot clip: " + id);
+			}
+		}
+		
+		// Clean up data
+		activeSounds.clear();
+		formats.clear();
+		audioData.clear();
+		clipLengthMs.clear();
+		
+		if (debug)
+			System.out.println("Sound shutdown complete.");
+	}
+	
 	////////////////////////////////////////////////////////////////////////////////
 	// One shot / single run functions
 	////////////////////////////////////////////////////////////////////////////////

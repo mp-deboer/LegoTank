@@ -38,6 +38,15 @@ public class Driver_Communication
 		eventQueue = new ArrayDeque<>();
 	}
 	
+	public void shutdown()
+	{
+		processes.clear();
+		eventQueue.clear();
+		
+		if (localDebug)
+			System.out.println("Communication shutdown complete.");
+	}
+	
 	public synchronized int registerNewProcess(StateMachine object, String name, String[] events, String[] states,
 			boolean debug)
 	{

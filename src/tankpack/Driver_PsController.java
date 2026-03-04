@@ -23,6 +23,16 @@ public class Driver_PsController
 	{
 	}
 	
+	public void shutdown()
+	{
+		controllers = null;
+		PsController = null;
+		components = null;
+		
+		if (debug)
+			System.out.println("PsController shutdown complete.");
+	}
+	
 	public synchronized boolean checkController()
 	{
 		Controller tmpController = null;
