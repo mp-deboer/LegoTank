@@ -146,10 +146,8 @@ public class Driver_Communication
 		int index;
 		Integer[] tmpProcessIndex = getSensitiveProcesses(doEvent);
 		
-		// Execute queuedEvents, should only happen at startup
-		if (executeQueuedEvents() > 0)
-			System.out
-					.println("! Warning: Executed queued events before the DO event (should only happen on startup).");
+		// Execute queuedEvents before DO, only happens at startup
+		executeQueuedEvents();
 		
 		// Iterate over processes accepting event "DO" and dispatch the event
 		for (int i = 0; i < tmpProcessIndex.length; i++)
@@ -159,24 +157,19 @@ public class Driver_Communication
 			processes.get(index).object.dispatchEvent(doEvent);
 		}
 		
-		// Execute queuedEvents in case the DO-iteration resulted in one or more
+		// Execute queuedEvents resulting from the DO-iteration (also executes follow-up events)
 		executeQueuedEvents();
 		
 		// notifyWaitingThreads();
 	}
 	
-	private int executeQueuedEvents()
+	private void executeQueuedEvents()
 	{
-		int size = eventQueue.size();
-		
-		// Processing:
 		while (!eventQueue.isEmpty())
 		{
 			QueuedEvent qe = eventQueue.removeFirst();
-			handleQueuedEvent(qe.name(), qe.type(), qe.data(), qe.debug());
+			handleQueuedEvent(qe.name, qe.type, qe.data, qe.debug);
 		}
-		
-		return size;
 	}
 	
 	private void handleQueuedEvent(String queuedEvent, DataType queuedDataType, Object data, boolean debug)
