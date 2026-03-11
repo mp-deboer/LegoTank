@@ -147,13 +147,30 @@ public class Driver_PsController
 		else // components == null
 			return false;
 	}
-	
+
+	// Joystick ranges from -1..1, where values other than 0 means it is used
 	public boolean isUsed(PsComponent c)
 	{
 		if (components != null && c != null)
 		{
 			float value = components[c.getIndex(isPs5)].getPollData();
+			
+			// Apply noise filter, requiring a minimum value before considered "used"
 			return (value > 0.06f || value < -0.06f);
+		}
+		else
+			return false;
+	}
+	
+	// Stick ranges from -1..1, where values higher than -1 means it is used
+	public boolean stickIsUsed(PsComponent c)
+	{
+		if (components != null && c != null)
+		{
+			float value = components[c.getIndex(isPs5)].getPollData();
+			
+			// Apply noise filter, requiring a minimum value before considered "used"
+			return (value > (-1f + 0.06f));
 		}
 		else
 			return false;

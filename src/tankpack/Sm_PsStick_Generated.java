@@ -193,10 +193,10 @@ public class Sm_PsStick_Generated extends StateMachine
     private void IDLE_do()
     {
         // IDLE behavior
-        // uml: do / { stickUsed = dpc.isUsed(stick); }
+        // uml: do / { stickUsed = dpc.stickIsUsed(stick); }
         {
-            // Step 1: execute action `stickUsed = dpc.isUsed(stick);`
-            this.vars.stickUsed = this.vars.dpc.isUsed(this.vars.stick);
+            // Step 1: execute action `stickUsed = dpc.stickIsUsed(stick);`
+            this.vars.stickUsed = this.vars.dpc.stickIsUsed(this.vars.stick);
         } // end of behavior for IDLE
         
         // IDLE behavior
@@ -313,10 +313,10 @@ public class Sm_PsStick_Generated extends StateMachine
     private void USED_do()
     {
         // USED behavior
-        // uml: 1. do / { stickUsed = dpc.isUsed(stick); }
+        // uml: 1. do / { stickUsed = dpc.stickIsUsed(stick); }
         {
-            // Step 1: execute action `stickUsed = dpc.isUsed(stick);`
-            this.vars.stickUsed = this.vars.dpc.isUsed(this.vars.stick);
+            // Step 1: execute action `stickUsed = dpc.stickIsUsed(stick);`
+            this.vars.stickUsed = this.vars.dpc.stickIsUsed(this.vars.stick);
         } // end of behavior for USED
         
         // USED behavior
