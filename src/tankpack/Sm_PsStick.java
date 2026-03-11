@@ -4,9 +4,7 @@ import tankpack.enums.PsComponent;
 
 public class Sm_PsStick extends Sm_PsStick_Generated
 {
-	private boolean localDebug = false;
-	
-	public Sm_PsStick(Driver_Communication dc, Driver_PsController dpc, PsComponent stick, boolean debug)
+	public Sm_PsStick(Driver_Communication dc, Driver_PsController dpc, PsComponent stick)
 	{
 		String stickName = stick.name().substring(0, stick.name().indexOf('_'));
 		
@@ -15,7 +13,7 @@ public class Sm_PsStick extends Sm_PsStick_Generated
 		super.vars.stick = stick;
 		super.vars.stickEvent = stickName + "Stick";
 		
-		initializeAndStart(dc, stickName, debug);
+		initializeAndStart(dc, stickName);
 	}
 	
 	@Override
@@ -27,8 +25,7 @@ public class Sm_PsStick extends Sm_PsStick_Generated
 		
 		if (super.vars.percentage != percentage)
 		{
-			if (localDebug)
-				System.out.println(super.vars.stickEvent + ": Percentage: " + percentage + "%");
+			super.logger.debug(super.vars.stickEvent + ": Percentage: " + percentage + "%");
 			
 			super.vars.percentage = percentage;
 			

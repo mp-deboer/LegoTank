@@ -2,12 +2,11 @@ package tankpack;
 
 public class Sm_Engine extends Sm_Engine_Generated
 {
-	private final boolean localDebug = false;
 	private final long MAXSPEEDINCREASEPERSECOND = 25L; // in percent / second, slightly faster than Motor due to delay
 														// in sounds
 	private int maxSpeedStep;
 	
-	public Sm_Engine(Driver_Communication dc, Driver_Sound ds, boolean debug)
+	public Sm_Engine(Driver_Communication dc, Driver_Sound ds)
 	{
 		// Inject custom variables into Generated vars
 		super.vars.ds = ds;
@@ -23,7 +22,7 @@ public class Sm_Engine extends Sm_Engine_Generated
 		if (maxSpeedStep <= 0)
 			maxSpeedStep = 1;
 		
-		initializeAndStart(dc, debug);
+		initializeAndStart(dc);
 	}
 	
 	@Override
@@ -42,9 +41,8 @@ public class Sm_Engine extends Sm_Engine_Generated
 		{
 			super.vars.currentSpeed = calculateNextSpeed(super.vars.currentSpeed, super.vars.targetSpeed, maxSpeedStep);
 			
-			if (localDebug)
-				System.out.printf("Engine speed set to %d (maxSpeedStep = %d)\n", super.vars.currentSpeed,
-						maxSpeedStep);
+			super.logger.debug(
+					String.format("Engine speed set to %d (maxSpeedStep = %d)", super.vars.currentSpeed, maxSpeedStep));
 			
 			// Fire engineSpeed event
 			super.fireEvent("engineSpeed", super.vars.currentSpeed);

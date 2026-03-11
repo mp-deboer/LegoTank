@@ -6,10 +6,13 @@ import java.lang.Math;
 import tankpack.enums.*;
 import tankpack.util.BashCmd;
 
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class Main
 {
 	public static final long DOPERIOD = 100L; // changing this requires recompiling all
-	private static boolean debug; // set via argument
 	private boolean lfOn = false;
 	private boolean shutdownHook = false;
 	
@@ -21,13 +24,10 @@ public class Main
 	private Sm_LineFollower lF;
 	private Sm_Estop eStop;
 	
+	private static final Logger logger = LogManager.getLogger(Main.class);
+	
 	public static void main(String[] args)
 	{
-		if (args.length > 0)
-			debug = Boolean.parseBoolean(args[0]); // Parses "true" (case-insensitive) as true
-		else
-			debug = false;
-		
 		@SuppressWarnings("unused")
 		Main m = new Main();
 	}
@@ -43,64 +43,63 @@ public class Main
 		Driver_Sound ds = new Driver_Sound();
 		dh.initialise();
 		
-		Sm_WifiMngr wifi = new Sm_WifiMngr(dc, false);
+		Sm_WifiMngr wifi = new Sm_WifiMngr(dc);
 		
 		// Initialise PsController State Machine
-		Sm_PsController psController = new Sm_PsController(dc, dpc, false);
+		Sm_PsController psController = new Sm_PsController(dc, dpc);
 		
 		// For each PS button, create a button StateMachine
 		Sm_PsButton[] buttons = new Sm_PsButton[PsComponent.BUTTONAMOUNT];
 		for (int i = 0; i < PsComponent.BUTTONAMOUNT; i++)
-			buttons[i] = new Sm_PsButton(dc, dpc, PsComponent.values()[i], false);
+			buttons[i] = new Sm_PsButton(dc, dpc, PsComponent.values()[i]);
 		
 		// Initialise a joystick StateMachine for each PS joystick
-		Sm_PsJoystick joystickLeft = new Sm_PsJoystick(dc, dpc, PsComponent.Leftstick_X, PsComponent.Leftstick_Y,
-				false);
+		Sm_PsJoystick joystickLeft = new Sm_PsJoystick(dc, dpc, PsComponent.Leftstick_X, PsComponent.Leftstick_Y);
 		Sm_PsJoystick joystickRight = new Sm_PsJoystick(dc, dpc, PsComponent.Rightstick_X,
-				null /* we are not interested in the right Y-axis */, false);
+				null /* we are not interested in the right Y-axis */);
 		
 		// Initialise a stick StateMachine for each PS stick
-		Sm_PsStick stickL2 = new Sm_PsStick(dc, dpc, PsComponent.L2_Sensor, false);
-		Sm_PsStick stickR2 = new Sm_PsStick(dc, dpc, PsComponent.R2_Sensor, false);
+		Sm_PsStick l2Stick = new Sm_PsStick(dc, dpc, PsComponent.L2_Sensor);
+		Sm_PsStick r2Stick = new Sm_PsStick(dc, dpc, PsComponent.R2_Sensor);
 		
 		// Initialise Tracks & Turret State machines
-		Sm_Tracks tracks = new Sm_Tracks(dc, false);
-		Sm_Turret turret = new Sm_Turret(dc, false);
+		Sm_Tracks tracks = new Sm_Tracks(dc);
+		Sm_Turret turret = new Sm_Turret(dc);
 		
 		// Initialise sound objects
 		// For each SingleSoundId, create a Sound object
 		Sm_Sound[] singleSounds = new Sm_Sound[SingleSoundId.values().length];
 		for (int i = 0; i < SingleSoundId.values().length; i++)
-			singleSounds[i] = new Sm_Sound(dc, ds, SingleSoundId.values()[i], false);
+			singleSounds[i] = new Sm_Sound(dc, ds, SingleSoundId.values()[i]);
 		
 		// For each MultiSoundId, create a Sound object
 		Sm_Sound[] multiSounds = new Sm_Sound[MultiSoundId.values().length];
 		for (int i = 0; i < MultiSoundId.values().length; i++)
-			multiSounds[i] = new Sm_Sound(dc, ds, MultiSoundId.values()[i], false);
+			multiSounds[i] = new Sm_Sound(dc, ds, MultiSoundId.values()[i]);
 		
 		// Special sound state machines
-		Sm_Engine engine = new Sm_Engine(dc, ds, false);
-		Sm_TurretDrive turretDrive = new Sm_TurretDrive(dc, ds, false);
+		Sm_Engine engine = new Sm_Engine(dc, ds);
+		Sm_TurretDrive turretDrive = new Sm_TurretDrive(dc, ds);
 		
 		// Initialise LineFollowing objects
 		// For each SensorPosition, create a Sensor object
 		Sm_Sensor[] sensors = new Sm_Sensor[SensorPosition.values().length];
 		for (int i = 0; i < SensorPosition.values().length; i++)
-			sensors[i] = new Sm_Sensor(dc, dh, SensorPosition.values()[i], false);
-		Sm_LineFollower lF = new Sm_LineFollower(dc, sensors, false);
+			sensors[i] = new Sm_Sensor(dc, dh, SensorPosition.values()[i]);
+		Sm_LineFollower lF = new Sm_LineFollower(dc, sensors);
 		
 		// Initialise hardware objects
-		Sm_Led1 led1 = new Sm_Led1(dc, dh, false);
-		Sm_Led2 led2 = new Sm_Led2(dc, dh, false);
-		Sm_GpioButton btn = new Sm_GpioButton(dc, dh, false);
+		Sm_Led1 led1 = new Sm_Led1(dc, dh);
+		Sm_Led2 led2 = new Sm_Led2(dc, dh);
+		Sm_GpioButton btn = new Sm_GpioButton(dc, dh);
 		
 		// For each MotorType, create a Motor object
 		Sm_Motor[] motors = new Sm_Motor[MotorType.values().length];
 		for (int i = 0; i < MotorType.values().length; i++)
-			motors[i] = new Sm_Motor(dc, dh, MotorType.values()[i], false);
+			motors[i] = new Sm_Motor(dc, dh, MotorType.values()[i]);
 		
 		// And finally, initialise eStop
-		Sm_Estop eStop = new Sm_Estop(dc, false);
+		Sm_Estop eStop = new Sm_Estop(dc);
 		
 		// Done, print all registered processes and start DO loop
 		dc.printAllProcesses();
@@ -114,7 +113,7 @@ public class Main
 		this.eStop = eStop;
 		
 		// Add startup event, executed at first DO, triggering related sound
-		dc.addQueuedEvent("STARTUP", false);
+		dc.addQueuedEvent("STARTUP", Level.INFO.intLevel());
 		
 		// Start GpioHandler
 		dh.start();
@@ -147,8 +146,8 @@ public class Main
 					// Set start time before print
 					start = System.currentTimeMillis();
 					
-					System.out.println("! Warning: Event DO took longer than intended (" + Math.abs(sleepTime)
-							+ "ms longer than " + period + "ms).");
+					logger.warn("Event DO took longer than intended (" + Math.abs(sleepTime) + "ms longer than "
+							+ period + "ms).");
 				}
 				else
 				{
@@ -161,7 +160,7 @@ public class Main
 				
 				// Print DO loop time. Add a carriage to prevent spamming lines
 				// When LineFollower is running and in debug mode, append its debug message
-				if (debug)
+				if (logger.isDebugEnabled())
 				{
 					System.out.printf("DO loop time: %3d", (period - sleepTime));
 					
@@ -196,7 +195,7 @@ public class Main
 		}
 		catch (InterruptedException e)
 		{
-			System.out.println(e.getMessage());
+			logger.info("InterruptedException");
 		}
 		
 		shutdown();
@@ -212,66 +211,74 @@ public class Main
 	{
 		long start = System.currentTimeMillis();
 		
-		System.out.println();
-		System.out.println("Shutting down:");
-		System.out.println("- Playing shutdown sound");
+		logger.info("Shutting down:");
+		logger.info("- Playing shutdown sound");
 		ds.playOneShot("shutdown");
 		
-		System.out.println("- Calling Hardware driver shutdown.");
+		logger.info("- Calling Hardware driver shutdown.");
 		dh.shutdown();
 		
-		System.out.println("- Calling PsController driver shutdown.");
+		logger.info("- Calling PsController driver shutdown.");
 		dpc.shutdown();
 		
-		System.out.println("- Calling Sound driver shutdown.");
+		logger.info("- Calling Sound driver shutdown.");
 		ds.shutdown();
 		
-		System.out.println("- Calling Communication driver shutdown.");
+		logger.info("- Calling Communication driver shutdown.");
 		dc.shutdown();
 		
-		System.out.println("- Waiting for shutdown sound to finish.");
+		logger.info("- Waiting for shutdown sound to finish.");
 		while (ds.isPlaying("shutdown"))
 			simplySleep(10L);
 		
 		long end = System.currentTimeMillis();
 		
-		System.out.println("- Done, time taken: " + (end - start) + "ms");
+		logger.info("- Done, time taken: " + (end - start) + "ms");
 		
 		// Actually shutdown if not running in debug mode and not stopped via Ctrl+C
-		if (!debug && !shutdownHook)
+		if (!logger.isDebugEnabled() && !shutdownHook)
 		{
 			try
 			{
-				new BashCmd(true).executeBashCommand("sudo shutdown -h now", true);
+				logger.info("Shutting down now!");
+				new BashCmd(logger).executeBashCommand("sudo shutdown -h now", true);
 			}
 			catch (IOException | InterruptedException e)
 			{
 				// ignore if interrupt
 				if (!(e instanceof InterruptedException))
-				{
-					System.err.println("! Error (shutdown): " + e.getMessage());
-					e.printStackTrace();
-				}
+					logger.error(e.getMessage(), e);
 			}
 		}
+		
+		// Manually shutdown logger (disabled automatic shutdown via XML settings due to missing shutdown messages)
+		LogManager.shutdown();
+		
+		// Note: Confirmed the code above is being executed, even after the shutdown command
 	}
 	
 	private void addShutdownHook(Thread myThread)
 	{
-		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-			System.out.println("Shutdown hook triggered.");
-			shutdownHook = true;
+		Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdownHook(myThread), "ShutdownHook"));
+	}
+	
+	private void shutdownHook(Thread myThread)
+	{
+		logger.info("Shutdown hook triggered.");
+		shutdownHook = true;
+		
+		myThread.interrupt();
+		try
+		{
+			// Wait max 15 seconds to allow for a graceful shutdown
+			myThread.join(15000);
 			
-			myThread.interrupt();
-			try
-			{
-				// Wait max 15 seconds to allow for a graceful shutdown
-				myThread.join(15000);
-			}
-			catch (InterruptedException ignored)
-			{
-			}
-		}));
+			if (myThread.isAlive())
+				logger.error("Graceful shutdown took too long!");
+		}
+		catch (InterruptedException ignored)
+		{
+		}
 	}
 	
 	// Sleep without requiring try/catch

@@ -7,17 +7,21 @@ import net.java.games.input.ControllerEnvironment;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.IOException;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import tankpack.enums.PsComponent;
 
 public class Driver_PsController
 {
-	private final boolean debug = false;
-	
 	// Own variables
 	private Controller[] controllers;
 	private Controller PsController = null;
 	private Component[] components = null;
 	private boolean isPs5;
+	
+	private static final Logger logger = LogManager.getLogger(Driver_PsController.class);
 	
 	public Driver_PsController()
 	{
@@ -29,8 +33,7 @@ public class Driver_PsController
 		PsController = null;
 		components = null;
 		
-		if (debug)
-			System.out.println("PsController shutdown complete.");
+		logger.debug("PsController shutdown complete.");
 	}
 	
 	public synchronized boolean checkController()
@@ -40,7 +43,7 @@ public class Driver_PsController
 		try
 		{
 			// Redirect jInput info log (printed to stdErr for some reason) to void if debug is disabled
-			if (!debug)
+			if (!logger.isDebugEnabled())
 			{
 				// Temporarily redirect error log, save original setting
 				PrintStream originalErr = System.err;
@@ -63,18 +66,15 @@ public class Driver_PsController
 		}
 		catch (ReflectiveOperationException e)
 		{
-			e.printStackTrace();
+			logger.error("ReflectiveOperationException", e);
 		}
 		
-		if (debug)
-			System.out.println("controllers found: " + controllers.length);
+		logger.debug("controllers found: " + controllers.length);
 		
 		for (int i = 0; i < controllers.length && tmpController == null; i++)
 		{
-			if (debug)
-				System.out.println("controller type: " + controllers[i].getType());
-			if (debug)
-				System.out.println("controller name: " + controllers[i].getName());
+			logger.debug("controller type: " + controllers[i].getType());
+			logger.debug("controller name: " + controllers[i].getName());
 			
 			if (controllers[i].getType() == Controller.Type.STICK
 					&& controllers[i].getName().contains("PLAYSTATION(R)3 Controller"))
@@ -147,7 +147,7 @@ public class Driver_PsController
 		else // components == null
 			return false;
 	}
-
+	
 	// Joystick ranges from -1..1, where values other than 0 means it is used
 	public boolean isUsed(PsComponent c)
 	{

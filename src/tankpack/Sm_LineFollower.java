@@ -4,19 +4,21 @@ import tankpack.enums.SensorPosition;
 
 public class Sm_LineFollower extends Sm_LineFollower_Generated
 {
-	public final boolean localDebug = false; // public so Main can read
-	
+	public boolean localDebug; // public so Main can read
 	public String debugMessage;
 	
-	public Sm_LineFollower(Driver_Communication dc, Sm_Sensor[] sensors, boolean debug)
+	public Sm_LineFollower(Driver_Communication dc, Sm_Sensor[] sensors)
 	{
 		// Inject custom variables into Generated vars
-		super.vars.localDebug = localDebug;
 		super.vars.sensors = sensors;
 		super.vars.followSpeed = 10;
 		super.vars.maxEasyTurnCount = 3000 / (int) Main.DOPERIOD; // set max time for easy turns to 3s
 		
-		initializeAndStart(dc, debug);
+		initializeAndStart(dc);
+		
+		// Get debug setting from logger
+		localDebug = super.logger.isDebugEnabled();
+		super.vars.localDebug = localDebug;
 	}
 	
 	@Override

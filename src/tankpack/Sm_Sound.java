@@ -14,20 +14,20 @@ public class Sm_Sound extends Sm_Sound_Generated
 	private boolean playRandom;
 	
 	// Constructor for MultiSound (random or sequential)
-	public Sm_Sound(Driver_Communication dc, Driver_Sound ds, MultiSoundId s, boolean debug)
+	public Sm_Sound(Driver_Communication dc, Driver_Sound ds, MultiSoundId s)
 	{
-		this(dc, ds, "Multi:" + s.name(), s.getTriggerEvent(), s.getSoundIds(), s.getPlayRandom(), debug);
+		this(dc, ds, "Multi:" + s.name(), s.getTriggerEvent(), s.getSoundIds(), s.getPlayRandom());
 	}
 	
 	// Constructor for SingleSound (treat as multi with 1 sound)
-	public Sm_Sound(Driver_Communication dc, Driver_Sound ds, SingleSoundId s, boolean debug)
+	public Sm_Sound(Driver_Communication dc, Driver_Sound ds, SingleSoundId s)
 	{
-		this(dc, ds, "Single:" + s.name(), s.getTriggerEvent(), new String[] { s.getSoundId() }, false, debug);
+		this(dc, ds, "Single:" + s.name(), s.getTriggerEvent(), new String[] { s.getSoundId() }, false);
 	}
 	
 	// Shared constructor
 	private Sm_Sound(Driver_Communication dc, Driver_Sound ds, String name, String triggerName, String[] sounds,
-			boolean random, boolean debug)
+			boolean random)
 	{
 		// Inject custom variables into Generated vars
 		super.vars.ds = ds;
@@ -40,7 +40,7 @@ public class Sm_Sound extends Sm_Sound_Generated
 		this.soundIds = sounds;
 		this.playRandom = random;
 		
-		initializeAndStart(dc, name, debug);
+		initializeAndStart(dc, name);
 	}
 	
 	@Override

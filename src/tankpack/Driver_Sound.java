@@ -14,10 +14,11 @@ import javax.sound.sampled.Clip;
 import javax.sound.sampled.FloatControl;
 import javax.sound.sampled.LineEvent;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class Driver_Sound
 {
-	private static final boolean debug = false;
-	private static final boolean highDebug = false;
 	private static final String BASE_PATH = "sound/";
 	
 	// Map to store running clips. Using ConcurrentHashMap to prevent ConcurrentModificationException upon shutdown
@@ -35,6 +36,8 @@ public class Driver_Sound
 	private static final float MIN_GAIN_DB = -24.0f;
 	private static final float SILENT = -80.0f;
 	private static final long ALMOSTDONETHRESHOLD = 2500L; // Amount of ms before 'done'
+	
+	private static final Logger logger = LogManager.getLogger(Driver_Sound.class);
 	
 	public Driver_Sound()
 	{
@@ -75,19 +78,15 @@ public class Driver_Sound
 					clipLengthMs.put(id, (clip.getMicrosecondLength() / 1000L));
 					clip.close();
 					
-					if (highDebug)
-						System.out.println("Measured length in ms of clip '" + id + "': " + clipLengthMs.get(id));
+					logger.trace("Measured length in ms of clip '" + id + "': " + clipLengthMs.get(id));
 				}
 				ais.close();
 				
-				if (debug)
-					System.out.println("Preloaded file: " + file);
+				logger.debug("Preloaded file: " + file);
 			}
 			catch (Exception e)
 			{
-				if (debug)
-					System.out.println("Failed to load file: " + file);
-				e.printStackTrace();
+				logger.error("Failed to load file: " + file, e);
 			}
 		}
 	}
@@ -103,8 +102,7 @@ public class Driver_Sound
 			}
 			as.clip.close();
 			
-			if (debug)
-				System.out.println("Stopped and closed looping clip: " + as.id);
+			logger.debug("Stopped and closed looping clip: " + as.id);
 		}
 		
 		// Stop and close one-shot clips, excluding "shutdown"
@@ -125,8 +123,7 @@ public class Driver_Sound
 				clip.close();
 				it.remove();
 				
-				if (debug)
-					System.out.println("Stopped and closed one-shot clip: " + id);
+				logger.debug("Stopped and closed one-shot clip: " + id);
 			}
 		}
 		
@@ -136,8 +133,7 @@ public class Driver_Sound
 		audioData.clear();
 		clipLengthMs.clear();
 		
-		if (debug)
-			System.out.println("Sound shutdown complete.");
+		logger.debug("Sound shutdown complete.");
 	}
 	
 	////////////////////////////////////////////////////////////////////////////////
@@ -156,23 +152,14 @@ public class Driver_Sound
 				clip.open(format, data, 0, data.length);
 				
 				// Auto-close when playback naturally ends (or is stopped early)
-				clip.addLineListener(event -> {
-					if (event.getType() == LineEvent.Type.STOP)
-					{
-						clip.close();
-						clips.remove(soundId); // Clean map entry
-						if (debug)
-							System.out.println("Clip auto-closed: " + soundId);
-					}
-				});
+				clip.addLineListener(event -> autoClose(soundId, clip, event));
 				
 				assertMaxVolume(clip);
 				clip.start();
 				
 				clips.put(soundId, clip);
 				
-				if (debug)
-					System.out.println("Started clip mapped to: " + soundId);
+				logger.debug("Started clip mapped to: " + soundId);
 			}
 			catch (Exception e)
 			{
@@ -181,13 +168,22 @@ public class Driver_Sound
 		}
 	}
 	
+	private void autoClose(String id, Clip c, LineEvent e)
+	{
+		if (e.getType() == LineEvent.Type.STOP)
+		{
+			c.close();
+			clips.remove(id); // Clean map entry
+			logger.debug("Clip auto-closed: " + id);
+		}
+	}
+	
 	private static void assertMaxVolume(Clip clip)
 	{
 		FloatControl volume = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
 		if (volume.getMaximum() != volume.getValue())
 		{
-			if (debug)
-				System.out.println("Setting volume to max: " + volume.getMaximum());
+			logger.debug("Setting volume to max: " + volume.getMaximum());
 			
 			volume.setValue(volume.getMaximum());
 		}
@@ -200,9 +196,8 @@ public class Driver_Sound
 		{
 			long clipLength = clipLengthMs.get(soundId);
 			
-			if (highDebug)
-				System.out.printf("Time remaining for '%s': %4d\r", soundId,
-						Math.max((clipLength - playTime - ALMOSTDONETHRESHOLD), 0));
+			logger.trace(String.format("'%s' is almost done in: %4dms", soundId,
+					Math.max((clipLength - playTime - ALMOSTDONETHRESHOLD), 0)));
 			
 			// Return true when clip will take less than ALMOSTDONETHRESHOLD to finish or when clip is not running
 			return (playTime >= (clipLength - ALMOSTDONETHRESHOLD)) || !clip.isRunning();
@@ -274,15 +269,12 @@ public class Driver_Sound
 			{
 				currentGainDB = calculateNextGain(currentGainDB, targetGain, fadeStep);
 				
-				if (debug)
-					if (currentGainDB == targetGain) // separate if statement to fix "dead code" warning
-						System.out.println("Volume of '" + this.id + "' reached target: " + currentGainDB);
-					
-				if (highDebug)
-					if (currentGainDB != targetGain) // separate if statement to fix "dead code" warning
-						System.out.printf("Volume of '%s' set to: %.2f; fadeStep = %.2f\n", id, currentGainDB,
-								fadeStep);
-					
+				if (currentGainDB == targetGain)
+					logger.debug("Volume of '" + this.id + "' reached target: " + currentGainDB);
+				else // (currentGainDB != targetGain)
+					logger.trace(
+							String.format("Volume of '%s' set to: %.2f; fadeStep = %.2f", id, currentGainDB, fadeStep));
+				
 				setVolume();
 			}
 			
@@ -294,8 +286,7 @@ public class Driver_Sound
 				maxGainDB = SILENT;
 				setVolume();
 				
-				if (debug)
-					System.out.println("Faded out and silenced: " + id);
+				logger.debug("Faded out and silenced: " + id);
 			}
 		}
 	}
@@ -347,8 +338,7 @@ public class Driver_Sound
 		}
 		
 		// If not found, log error
-		if (debug)
-			System.out.println("Loop not preloaded: " + soundId);
+		logger.error("Loop not preloaded: " + soundId);
 	}
 	
 	public void fadeOut(String soundId, float fadeOutTime)
@@ -389,11 +379,14 @@ public class Driver_Sound
 				percentage = Math.max(0f, Math.min(100f, percentage));
 				
 				// Calculate GAIN based on MIN, MAX and percentage
-				as.maxGainDB = MIN_GAIN_DB + ((percentage / 100f) * (MAX_GAIN_DB - MIN_GAIN_DB));
+				float maxGain = MIN_GAIN_DB + ((percentage / 100f) * (MAX_GAIN_DB - MIN_GAIN_DB));
 				
-				if (debug)
-					System.out.println("Set max gain of '" + soundId + "' to: " + as.maxGainDB);
-				
+				// Skip if maxGain is already set
+				if (as.maxGainDB != maxGain)
+				{
+					as.maxGainDB = maxGain;
+					logger.debug("Set max gain of '" + soundId + "' to: " + as.maxGainDB);
+				}
 				return;
 			}
 		}

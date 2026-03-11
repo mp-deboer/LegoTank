@@ -5,12 +5,9 @@ import tankpack.enums.PsComponent;
 
 public class Sm_PsJoystick extends Sm_PsJoystick_Generated
 {
-	private final boolean localDebug = false;
-	
 	private String stickName;
 	
-	public Sm_PsJoystick(Driver_Communication dc, Driver_PsController dpc, PsComponent psX, PsComponent psY,
-			boolean debug)
+	public Sm_PsJoystick(Driver_Communication dc, Driver_PsController dpc, PsComponent psX, PsComponent psY)
 	{
 		stickName = psX.name().substring(0, psX.name().indexOf('_'));
 		
@@ -21,7 +18,7 @@ public class Sm_PsJoystick extends Sm_PsJoystick_Generated
 		super.vars.stickIdleEvent = stickName + "Idle";
 		super.vars.stickUsedEvent = stickName + "Used";
 		
-		initializeAndStart(dc, stickName, debug);
+		initializeAndStart(dc, stickName);
 	}
 	
 	@Override
@@ -50,9 +47,8 @@ public class Sm_PsJoystick extends Sm_PsJoystick_Generated
 		
 		if (super.vars.percentage != percentage || super.vars.direction != direction)
 		{
-			if (localDebug)
-				System.out.println(super.vars.stickX.name() + ": Degree & percentage: " + degree + "°, " + percentage
-						+ "%, event: " + event + "(" + percentage + ")");
+			super.logger.debug(super.vars.stickX.name() + ": Degree & percentage: " + degree + "°, " + percentage
+					+ "%, event: " + event + "(" + percentage + ")");
 			
 			super.vars.percentage = percentage;
 			super.vars.direction = direction;

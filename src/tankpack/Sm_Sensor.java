@@ -9,7 +9,7 @@ public class Sm_Sensor extends Sm_Sensor_Generated
 	private String triggerBlack;
 	private String triggerWhite;
 	
-	public Sm_Sensor(Driver_Communication dc, Driver_Hardware dh, SensorPosition sp, boolean debug)
+	public Sm_Sensor(Driver_Communication dc, Driver_Hardware dh, SensorPosition sp)
 	{
 		// Inject custom variables into Generated vars
 		super.vars.simulation = simulation;
@@ -22,7 +22,7 @@ public class Sm_Sensor extends Sm_Sensor_Generated
 		triggerBlack = sp.getBlackEvent().toUpperCase();
 		triggerWhite = sp.getWhiteEvent().toUpperCase();
 		
-		initializeAndStart(dc, sp.name(), debug);
+		initializeAndStart(dc, sp.name());
 	}
 	
 	@Override

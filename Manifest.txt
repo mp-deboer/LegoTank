@@ -1,1 +1,1 @@
-Class-Path: /usr/share/java/jinput.jar
+Class-Path: /usr/share/java/jinput.jar /usr/share/java/log4j-api.jar /usr/share/java/log4j-core.jar

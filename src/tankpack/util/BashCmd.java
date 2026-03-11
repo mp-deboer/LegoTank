@@ -6,13 +6,19 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
+
 public class BashCmd
 {
-	private final boolean verbose;
+	private Logger logger;
 	
-	public BashCmd(boolean verbose)
+	public BashCmd(Logger log)
 	{
-		this.verbose = verbose;
+		// Initialise BashCmd logger with unique name and same log-level as calling object
+		logger = LogManager.getLogger(log.getName() + this.getClass().getSimpleName());
+		Configurator.setLevel(logger.getName(), log.getLevel());
 	}
 	
 	// Record returned by executeBashCommand. stdOut and exitCode are null if waitForCompletion = false
@@ -24,8 +30,7 @@ public class BashCmd
 			throws IOException, InterruptedException
 	{
 		// Announce command to be executed
-		if (verbose)
-			System.out.println("+ " + command);
+		logger.debug("+ " + command);
 		
 		// Run command, add ', "-x"' to run in verbose mode
 		String[] cmdArray = { "bash", "-c", command };
@@ -44,18 +49,17 @@ public class BashCmd
 			while ((line = stdout.readLine()) != null)
 			{
 				stdoutLines.add(line);
-				if (verbose)
-					System.out.println(line);
+				logger.debug(line);
 			}
 			
 			// Print stdErr to Java's stdErr
 			while ((line = stderr.readLine()) != null)
-				System.err.println("Error: " + line);
+				logger.error(line);
 			
 			// Wait for the process to complete
 			int exitCode = process.waitFor();
 			if (exitCode != 0)
-				System.err.println("Command '" + command + "' exited with code: " + exitCode);
+				logger.error("Command '" + command + "' exited with code: " + exitCode);
 			
 			// Close streams
 			stdout.close();
@@ -65,44 +69,44 @@ public class BashCmd
 		}
 		else
 		{
-			// Do not wait for completion, instead create a thread to consume stdOut and stdErr, preventing a buffer
-			// overflow/deadlock. Threads exits and streams close when process completes / is killed
+			// Do not wait for completion, instead create threads to consume stdOut and stdErr, preventing a buffer
+			// overflow/deadlock. Threads exit and streams close when process completes / is killed
 			
-			// stdOut: print if verbose, otherwise discard
-			new Thread(() -> {
-				// By using "try with resources" (BufferedReader), we do not need to close after
-				try (BufferedReader stdout = new BufferedReader(new InputStreamReader(process.getInputStream())))
-				{
-					String line;
-					while ((line = stdout.readLine()) != null)
-					{
-						if (verbose)
-						{
-							System.out.println(line);
-						}
-					}
-				}
-				catch (IOException ignored)
-				{
-				}
-			}).start();
+			// Create thread reading process output
+			new Thread(() -> readProcessOutput(process), "OutputReader").start();
 			
-			// stdErr: always print
-			new Thread(() -> {
-				try (BufferedReader stderr = new BufferedReader(new InputStreamReader(process.getErrorStream())))
-				{
-					String line;
-					while ((line = stderr.readLine()) != null)
-					{
-						System.err.println("+ Error: " + line);
-					}
-				}
-				catch (IOException ignored)
-				{
-				}
-			}).start();
+			// Create thread reading process error messages
+			new Thread(() -> readProcessErrors(process), "ErrorReader").start();
 			
 			return new BashResult(process, null, null);
+		}
+	}
+	
+	private void readProcessOutput(Process process)
+	{
+		// stdOut: log with debug level
+		try (BufferedReader stdout = new BufferedReader(new InputStreamReader(process.getInputStream())))
+		{
+			String line;
+			while ((line = stdout.readLine()) != null)
+				logger.debug(line);
+		}
+		catch (IOException ignored)
+		{
+		}
+	}
+	
+	private void readProcessErrors(Process process)
+	{
+		// stdErr: log with error level (always prints)
+		try (BufferedReader stderr = new BufferedReader(new InputStreamReader(process.getErrorStream())))
+		{
+			String line;
+			while ((line = stderr.readLine()) != null)
+				logger.error(line);
+		}
+		catch (IOException ignored)
+		{
 		}
 	}
 }

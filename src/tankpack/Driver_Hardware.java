@@ -5,13 +5,15 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import tankpack.enums.MotorType;
 import tankpack.enums.SensorPosition;
 
 public class Driver_Hardware
 {
-	private final boolean debug = false;
-	
 	// define GPIO constants
 	private final int PIN_LED2 = 18; // GPIO_1 / wPi = 1; BCM = 18
 	private final int PIN_BTN = 4; // GPIO_7 / wPi = 7; BCM = 4
@@ -36,9 +38,11 @@ public class Driver_Hardware
 	private final byte IR3 = (byte) 3;
 	
 	// Own variables
-	private GpioHandler gpioHandler = new GpioHandler(PIN_BTN, PIN_LED2, debug);
+	private GpioHandler gpioHandler = new GpioHandler(PIN_BTN, PIN_LED2);
 	FileOutputStream fos;
 	FileInputStream fis;
+	
+	private static final Logger logger = LogManager.getLogger(Driver_Hardware.class);
 	
 	public Driver_Hardware()
 	{
@@ -59,20 +63,20 @@ public class Driver_Hardware
 				{
 					fos = new FileOutputStream(spiDev);
 					fis = new FileInputStream(spiDev);
-					System.out.println("SPI channel " + spiDev.getPath() + " opened successfully.");
+					logger.info("SPI channel " + spiDev.getPath() + " opened successfully.");
 					break; // success → exit loop
 				}
 				else
 				{
 					attempt++;
-					System.out.println("SPI device not found yet (attempt " + attempt + "). Retrying in " + retryDelayMs
+					logger.error("SPI device not found yet (attempt " + attempt + "). Retrying in " + retryDelayMs
 							+ "ms...");
 				}
 			}
 			catch (FileNotFoundException e)
 			{
 				attempt++;
-				System.out.println(
+				logger.error(
 						"SPI device not ready yet (attempt " + attempt + "). Retrying in " + retryDelayMs + "ms...");
 			}
 			
@@ -83,7 +87,7 @@ public class Driver_Hardware
 			catch (InterruptedException ie)
 			{
 				Thread.currentThread().interrupt(); // Propagate interrupt
-				throw new RuntimeException("Interrupted while trying to open SPI device", ie);
+				logger.error("Interrupted while trying to open SPI device", ie);
 			}
 		}
 	}
@@ -112,7 +116,7 @@ public class Driver_Hardware
 		}
 		catch (IOException e)
 		{
-			System.out.println("Error: Failed to close SPI streams.");
+			logger.error("Failed to close SPI streams.");
 		}
 		
 		// Wait for LED2 off to take effect
@@ -129,8 +133,7 @@ public class Driver_Hardware
 			Thread.currentThread().interrupt(); // Propagate interrupt
 		}
 		
-		if (debug)
-			System.out.println("Hardware shutdown complete.");
+		logger.debug("Hardware shutdown complete.");
 	}
 	
 	// Sleep without requiring try/catch
@@ -191,7 +194,7 @@ public class Driver_Hardware
 			case LeftTrack -> send(determineByte(LEFTTRACK, speed));
 			case RightTrack -> send(determineByte(RIGHTTRACK, speed));
 			case Turret -> send(determineByte(TURRET, speed));
-			default -> System.out.println("! Error: setMotorSpeed not configured for MotorType " + motor);
+			default -> logger.error("setMotorSpeed not configured for MotorType " + motor);
 		}
 	}
 	
@@ -205,7 +208,7 @@ public class Driver_Hardware
 		}
 		catch (IOException e)
 		{
-			System.out.println("Error: Failed to write byte.");
+			logger.error("Failed to write byte.");
 		}
 	}
 	
@@ -228,7 +231,7 @@ public class Driver_Hardware
 		}
 		else if (speed > 100 || speed < -100)
 		{
-			System.err.println("Error: Speed must be between -100 and 100!");
+			logger.error("Speed must be between -100 and 100!");
 			return (byte) (track + HALT);
 		}
 		else
@@ -247,7 +250,7 @@ public class Driver_Hardware
 			}
 			else
 			{
-				System.err.println("Error: Something is wrong with your speed determining.");
+				logger.error("Something is wrong with your speed determining.");
 				return 0;
 			}
 		}
@@ -260,7 +263,7 @@ public class Driver_Hardware
 			case Right -> send(IR1);
 			case Middle -> send(IR2);
 			case Left -> send(IR3);
-			default -> System.out.println("! Error: readSensor not configured for SensorPosition " + sensor);
+			default -> logger.error("readSensor not configured for SensorPosition " + sensor);
 		}
 		
 		// Get and return sensor output, convert unsigned byte to unsigned int
@@ -281,7 +284,7 @@ public class Driver_Hardware
 		}
 		catch (IOException e)
 		{
-			System.out.println("Error: Receive failed.");
+			logger.error("Receive failed.");
 			return (byte) -1; // Caller checks if (receive() & 0xFF) == 255 for error, assuming 255 isn't valid data
 		}
 		return (byte) value;

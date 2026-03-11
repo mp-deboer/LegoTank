@@ -4,10 +4,12 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class Driver_Communication
 {
-	private final boolean localDebug = false;
-	
 	public enum DataType
 	{
 		// Allowed datatypes for events
@@ -24,10 +26,12 @@ public class Driver_Communication
 	{}
 	
 	// Initialise Event queue variables
-	private record QueuedEvent(String name, DataType type, Object data, boolean debug)
+	private record QueuedEvent(String name, DataType type, Object data, int logLevel)
 	{}
 	
 	private Deque<QueuedEvent> eventQueue = new ArrayDeque<>();
+	
+	private static final Logger logger = LogManager.getLogger(Driver_Communication.class);
 	
 	public Driver_Communication()
 	{
@@ -43,25 +47,25 @@ public class Driver_Communication
 		processes.clear();
 		eventQueue.clear();
 		
-		if (localDebug)
-			System.out.println("Communication shutdown complete.");
+		logger.debug("Communication shutdown complete.");
 	}
 	
 	public synchronized int registerNewProcess(StateMachine object, String name, String[] events, String[] states,
-			boolean debug)
+			int logLevel)
 	{
 		processCounter++;
 		
 		// Add process, leave allowed events empty; processes will update their initial allowed events upon start
 		processes.add(new ProcessInfo(processCounter, object, name, events, states, new String[0]));
 		
-		if (debug)
+		if (logLevel >= Level.DEBUG.intLevel())
+			logger.debug("Process registered: " + name);
+		
+		if (logLevel >= Level.TRACE.intLevel())
 		{
-			System.out.println("Process registered: " + name);
-			
-			System.out.println("Events:");
+			logger.trace("Events:");
 			for (int i = 0; i < events.length; i++)
-				System.out.println("    - " + events[i]);
+				logger.trace("    - " + events[i]);
 		}
 		
 		return (processCounter);
@@ -69,10 +73,10 @@ public class Driver_Communication
 	
 	public void printAllProcesses()
 	{
-		System.out.println("All processes:");
+		logger.info("All processes:");
 		
 		for (int i = 0; i < processes.size(); i++)
-			System.out.printf("%2d - %s\n", processes.get(i).id, processes.get(i).name);
+			logger.info(String.format("%2d - %s", processes.get(i).id, processes.get(i).name));
 	}
 	
 	public synchronized boolean eventAllowed(String event)
@@ -96,20 +100,19 @@ public class Driver_Communication
 		}
 	}
 	
-	public void executeEvent(String event)
+	public void executeEvent(String event, int logLevel)
 	{
 		int index;
-		Integer[] tmpProcessIndex = getSensitiveProcesses(event);
+		Integer[] tmpProcessIndex = getSensitiveProcesses(event, logLevel);
 		
 		for (int i = 0; i < tmpProcessIndex.length; i++)
 		{
 			index = tmpProcessIndex[i];
 			
-			clearAllowedEvents(index);
+			clearAllowedEvents(index, logLevel);
 			
-			if (localDebug)
-				System.out.printf("Debug CommunicationDriver: Dispatching event to '%s': %s\n",
-						processes.get(index).name, event);
+			if (logLevel >= Level.DEBUG.intLevel())
+				logger.debug(String.format("Dispatching event to '%s': %s", processes.get(index).name, event));
 			
 			processes.get(index).object.dispatchEvent(event);
 		}
@@ -118,20 +121,20 @@ public class Driver_Communication
 		// notifyWaitingThreads();
 	}
 	
-	public void executeEvent(String event, int data)
+	public void executeEvent(String event, int data, int logLevel)
 	{
 		int index;
-		Integer[] tmpProcessIndex = getSensitiveProcesses(event);
+		Integer[] tmpProcessIndex = getSensitiveProcesses(event, logLevel);
 		
 		for (int i = 0; i < tmpProcessIndex.length; i++)
 		{
 			index = tmpProcessIndex[i];
 			
-			clearAllowedEvents(index);
+			clearAllowedEvents(index, logLevel);
 			
-			if (localDebug)
-				System.out.printf("Debug CommunicationDriver: Dispatching event to '%s': %s (%d)\n",
-						processes.get(index).name, event, data);
+			if (logLevel >= Level.DEBUG.intLevel())
+				logger.debug(
+						String.format("Dispatching event to '%s': %s (%d)", processes.get(index).name, event, data));
 			
 			processes.get(index).object.dispatchEvent(event, data);
 		}
@@ -144,7 +147,7 @@ public class Driver_Communication
 	{
 		String doEvent = "DO";
 		int index;
-		Integer[] tmpProcessIndex = getSensitiveProcesses(doEvent);
+		Integer[] tmpProcessIndex = getSensitiveProcesses(doEvent, Level.INFO.intLevel());
 		
 		// Execute queuedEvents before DO, only happens at startup
 		executeQueuedEvents();
@@ -168,58 +171,47 @@ public class Driver_Communication
 		while (!eventQueue.isEmpty())
 		{
 			QueuedEvent qe = eventQueue.removeFirst();
-			handleQueuedEvent(qe.name, qe.type, qe.data, qe.debug);
+			handleQueuedEvent(qe.name, qe.type, qe.data, qe.logLevel);
 		}
 	}
 	
-	private void handleQueuedEvent(String queuedEvent, DataType queuedDataType, Object data, boolean debug)
+	private void handleQueuedEvent(String queuedEvent, DataType queuedDataType, Object data, int logLevel)
 	{
 		if (!queuedEvent.equals(""))
 		{
 			if (eventAllowed(queuedEvent))
 			{
-				if (debug)
-					System.out.print("Executing queuedEvent: " + queuedEvent);
+				if (logLevel >= Level.DEBUG.intLevel())
+				{
+					if (!queuedDataType.equals(DataType.None))
+						logger.debug("Executing queuedEvent: " + queuedEvent + " (" + data + ")");
+					else // if queuedDataType == DataType.None
+						logger.debug("Executing queuedEvent: " + queuedEvent);
+				}
 				
 				if (queuedDataType.equals(DataType.Integer))
-				{
-					if (debug) // Append data to debug line
-						System.out.println(" (" + data + ")");
-					
-					executeEvent(queuedEvent, (Integer) data);
-				}
+					executeEvent(queuedEvent, (Integer) data, logLevel);
 				else // if (queuedDataType.equals(DataType.None))
-				{
-					if (debug) // No data, print newline
-						System.out.println();
-					
-					executeEvent(queuedEvent);
-				}
+					executeEvent(queuedEvent, logLevel);
 			}
 			else
 			{
-				System.out.println("! Error: queuedEvent " + queuedEvent + " is not allowed.");
+				logger.error("queuedEvent " + queuedEvent + " is not allowed.");
 			}
 		}
 	}
 	
-	public void addQueuedEvent(String event, boolean debug)
+	public void addQueuedEvent(String event, int logLevel)
 	{
-		if (debug)
-			System.out.println("Adding event to queue: " + event);
-		
-		eventQueue.addLast(new QueuedEvent(event, DataType.None, 0, debug));
+		eventQueue.addLast(new QueuedEvent(event, DataType.None, 0, logLevel));
 	}
 	
-	public void addQueuedEvent(String event, int data, boolean debug)
+	public void addQueuedEvent(String event, int data, int logLevel)
 	{
-		if (debug)
-			System.out.println("Adding event to queue: " + event + " (" + data + ")");
-		
-		eventQueue.addLast(new QueuedEvent(event, DataType.Integer, data, debug));
+		eventQueue.addLast(new QueuedEvent(event, DataType.Integer, data, logLevel));
 	}
 	
-	public synchronized void updateProcess(int processId, String newState, String[] newAllowedEvents, boolean debug)
+	public synchronized void updateProcess(int processId, String newState, String[] newAllowedEvents, int logLevel)
 	{
 		for (int i = 0; i < processes.size(); i++)
 		{
@@ -228,18 +220,15 @@ public class Driver_Communication
 			{
 				processes.set(i, new ProcessInfo(p.id, p.object, p.name, p.events, p.states, newAllowedEvents));
 				
-				if (debug)
+				if (logLevel >= Level.DEBUG.intLevel())
+					logger.debug(String.format("New State for Process: %s (%d): %s", p.name, p.id, newState));
+				
+				if (logLevel >= Level.TRACE.intLevel())
 				{
-					System.out.printf("Debug CommunicationDriver: New State for Process: %s (%d): %s\n", p.name, p.id,
-							newState);
+					logger.trace("New allowed events:");
 					
-					if (localDebug)
-					{
-						System.out.println("New allowed events:");
-						
-						for (int k = 0; k < newAllowedEvents.length; k++)
-							System.out.println("    - " + newAllowedEvents[k]);
-					}
+					for (int k = 0; k < newAllowedEvents.length; k++)
+						logger.trace("    - " + newAllowedEvents[k]);
 				}
 			}
 		}
@@ -269,7 +258,7 @@ public class Driver_Communication
 		return false;
 	}
 	
-	private Integer[] getSensitiveProcesses(String event)
+	private Integer[] getSensitiveProcesses(String event, int logLevel)
 	{
 		String[] allowedEvents;
 		ArrayList<Integer> tmpSensitiveProcessIDs = new ArrayList<Integer>();
@@ -284,12 +273,10 @@ public class Driver_Communication
 				{
 					if (allowedEvents[k].equals(event))
 					{
-						if (localDebug)
-							if (!event.equals("DO")) // separate if statement to fix "dead code" warning
-								System.out.printf(
-										"Debug CommunicationDriver: Found sensitive process '%s' (%d) on event: %s\n",
-										processes.get(i).name, processes.get(i).id, allowedEvents[k]);
-							
+						if (!event.equals("DO") && logLevel >= Level.TRACE.intLevel())
+							logger.trace(String.format("Found sensitive process '%s' (%d) on event: %s",
+									processes.get(i).name, processes.get(i).id, allowedEvents[k]));
+						
 						tmpSensitiveProcessIDs.add(i);
 						break;
 					}
@@ -299,13 +286,12 @@ public class Driver_Communication
 		return tmpSensitiveProcessIDs.toArray(new Integer[tmpSensitiveProcessIDs.size()]);
 	}
 	
-	private void clearAllowedEvents(int index)
+	private void clearAllowedEvents(int index, int logLevel)
 	{
 		ProcessInfo p = processes.get(index);
 		
-		if (localDebug)
-			System.out.printf("Debug CommunicationDriver: Clearing allowed events of process '%s' (%d)\n", p.name,
-					p.id);
+		if (logLevel >= Level.TRACE.intLevel())
+			logger.trace(String.format("Clearing allowed events of process '%s' (%d)", p.name, p.id));
 		
 		processes.set(index, new ProcessInfo(p.id, p.object, p.name, p.events, p.states, null));
 	}

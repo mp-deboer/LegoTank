@@ -2,12 +2,17 @@ package tankpack;
 
 import java.util.Arrays;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
+
 public abstract class StateMachine
 {
 	// State-machine variables
-	private boolean debug;
+	private int logLevel;
 	private int processId;
 	private Driver_Communication dc;
+	protected Logger logger;
 	
 	// Constant functions (can be used in state machine diagrams)
 	final protected boolean FALSE()
@@ -51,24 +56,35 @@ public abstract class StateMachine
 	
 	protected void updateProcess()
 	{
-		dc.updateProcess(processId, getCurrentStateString(), getAllowedEventsForCurrentState(), debug);
+		dc.updateProcess(processId, getCurrentStateString(), getAllowedEventsForCurrentState(), logLevel);
 	}
 	
-	protected void initializeAndStart(Driver_Communication dc, boolean debug)
+	protected void initializeAndStart(Driver_Communication dc)
 	{
 		// No name postfix
-		initializeAndStart(dc, "", debug);
+		initializeAndStart(dc, "");
 	}
 	
-	protected void initializeAndStart(Driver_Communication dc, String namePostfix, boolean debug)
+	protected void initializeAndStart(Driver_Communication dc, String namePostfix)
 	{
 		this.dc = dc;
-		this.debug = debug;
 		
 		String[] events = getAllEventNames();
 		String[] states = getAllStateNames();
 		
-		processId = dc.registerNewProcess(this, this.getClass().getName() + namePostfix, events, states, debug);
+		String smName = this.getClass().getName() + namePostfix;
+		logger = LogManager.getLogger(smName);
+		
+		// If namePostfix is set, get log level from class
+		if (!namePostfix.isEmpty())
+		{
+			Logger tmpLogger = LogManager.getLogger(this.getClass());
+			Configurator.setLevel(logger.getName(), tmpLogger.getLevel());
+		}
+		
+		logLevel = logger.getLevel().intLevel();
+		
+		processId = dc.registerNewProcess(this, smName, events, states, logLevel);
 		
 		startSm();
 	}
@@ -82,12 +98,18 @@ public abstract class StateMachine
 	protected void fireEvent(String event)
 	{
 		event = event.toUpperCase();
-		dc.addQueuedEvent(event, debug);
+		
+		logger.debug("Adding event to queue: " + event);
+		
+		dc.addQueuedEvent(event, logLevel);
 	}
 	
 	protected void fireEvent(String event, int data)
 	{
 		event = event.toUpperCase();
-		dc.addQueuedEvent(event, data, debug);
+		
+		logger.debug("Adding event to queue: " + event + " (" + data + ")");
+		
+		dc.addQueuedEvent(event, data, logLevel);
 	}
 }

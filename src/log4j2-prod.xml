@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration xmlns="https://logging.apache.org/xml/ns"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="https://logging.apache.org/xml/ns https://logging.apache.org/xml/ns/log4j-config-2.xsd"
+	shutdownHook="disable">  <!-- Disable automatic shutdown to fix missing
+	shutdown messages -->
+	<Appenders>
+		<Console name="Console">
+			<PatternLayout
+				pattern="%d{DEFAULT} %highlight{[%p]}{TRACE=cyan, DEBUG=green, INFO=white, WARN=yellow, ERROR=bright red, FATAL=red} %c{1} (Thread:%t) - %M(): %m%n" />
+		</Console>
+
+		<File name="File" fileName="TankLog/Tank.log" append="false">
+			<PatternLayout
+				pattern="%d{DEFAULT} [%p] %c{1} (Thread:%t) - %M(): %m%n" />
+		</File>
+	</Appenders>
+	<Loggers>
+		<!-- Set all log levels to INFO for production -->
+
+		<!-- Root logger as fallback / catch-all -->
+		<Root level="INFO">
+			<AppenderRef ref="Console" />
+
+			<!-- Also log to file in production -->
+			<AppenderRef ref="File" />
+		</Root>
+	</Loggers>
+</Configuration>

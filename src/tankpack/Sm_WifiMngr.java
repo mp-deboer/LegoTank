@@ -7,15 +7,14 @@ import tankpack.util.BashCmd.BashResult;
 
 public class Sm_WifiMngr extends Sm_WifiMngr_Generated
 {
-	private final boolean localDebug = false;
-	
-	BashCmd bashCmd = new BashCmd(localDebug);
+	BashCmd bashCmd;
 	private String ssid;
 	private String password;
 	
-	public Sm_WifiMngr(Driver_Communication dc, boolean debug)
+	public Sm_WifiMngr(Driver_Communication dc)
 	{
-		initializeAndStart(dc, debug);
+		initializeAndStart(dc);
+		bashCmd = new BashCmd(super.logger);
 	}
 	
 	@Override
@@ -26,8 +25,7 @@ public class Sm_WifiMngr extends Sm_WifiMngr_Generated
 		ssid = "TankConnect";
 		password = "raspberrytank";
 		
-		if (localDebug)
-			System.out.println("Read WiFi setting: " + ssid);
+		super.logger.debug("Read WiFi setting: " + ssid);
 	}
 	
 	@Override
@@ -37,13 +35,12 @@ public class Sm_WifiMngr extends Sm_WifiMngr_Generated
 		
 		// Check the Wi-Fi connection state
 		String command = "sudo wpa_cli -i wlan0 status";
-		BashResult result = executeCommand(command, true, "checkConnection");
+		BashResult result = executeCommand(command, true);
 		
 		if (result != null)
 			isConnected = result.stdout().contains("wpa_state=COMPLETED");
 		
-		if (localDebug)
-			System.out.println("Connected status: " + isConnected);
+		super.logger.debug("Connected status: " + isConnected);
 		
 		return isConnected;
 	}
@@ -52,10 +49,9 @@ public class Sm_WifiMngr extends Sm_WifiMngr_Generated
 	protected void scanWifi()
 	{
 		String command = "sudo nmcli device wifi rescan";
-		executeCommand(command, false, "scanWifi");
+		executeCommand(command, false);
 		
-		if (localDebug)
-			System.out.println("Started scanning for WiFi networks");
+		super.logger.debug("Started scanning for WiFi networks");
 	}
 	
 	@Override
@@ -63,13 +59,12 @@ public class Sm_WifiMngr extends Sm_WifiMngr_Generated
 	{
 		// Check the Wi-Fi connection state
 		String command = "sudo nmcli device wifi connect " + ssid + " password " + password;
-		executeCommand(command, false, "connectWifi");
+		executeCommand(command, false);
 		
-		if (localDebug)
-			System.out.println("Connecting to WiFi network: " + ssid);
+		super.logger.debug("Connecting to WiFi network: " + ssid);
 	}
 	
-	private BashResult executeCommand(String command, boolean sync, String caller)
+	private BashResult executeCommand(String command, boolean sync)
 	{
 		try
 		{
@@ -81,8 +76,7 @@ public class Sm_WifiMngr extends Sm_WifiMngr_Generated
 				Thread.currentThread().interrupt(); // propagate interrupt
 			else // another error occurred
 			{
-				System.err.println("Error (" + caller + "): " + e.getMessage());
-				e.printStackTrace();
+				super.logger.error("Command '" + command + "' resulted in error: " + e.getMessage(), e);
 			}
 		}
 		

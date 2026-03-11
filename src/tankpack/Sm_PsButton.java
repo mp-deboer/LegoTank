@@ -4,7 +4,7 @@ import tankpack.enums.PsComponent;
 
 public class Sm_PsButton extends Sm_PsButton_Generated
 {
-	public Sm_PsButton(Driver_Communication dc, Driver_PsController dpc, PsComponent psc, boolean debug)
+	public Sm_PsButton(Driver_Communication dc, Driver_PsController dpc, PsComponent psc)
 	{
 		// Inject custom variables into Generated vars
 		super.vars.dpc = dpc;
@@ -12,6 +12,6 @@ public class Sm_PsButton extends Sm_PsButton_Generated
 		super.vars.buttonPressedEvent = psc.name() + "Pressed";
 		super.vars.buttonReleasedEvent = psc.name() + "Released";
 		
-		initializeAndStart(dc, psc.name(), debug);
+		initializeAndStart(dc, psc.name());
 	}
 }

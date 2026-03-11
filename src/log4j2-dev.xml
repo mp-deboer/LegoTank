@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration xmlns="https://logging.apache.org/xml/ns"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="https://logging.apache.org/xml/ns https://logging.apache.org/xml/ns/log4j-config-2.xsd"
+	shutdownHook="disable">  <!-- Disable automatic shutdown to fix missing
+	shutdown messages -->
+	<Appenders>
+		<Console name="Console">
+			<PatternLayout
+				pattern="%d{DEFAULT} %highlight{[%p]}{TRACE=cyan, DEBUG=green, INFO=white, WARN=yellow, ERROR=bright red, FATAL=red} %c{1} (Thread:%t) - %M(): %m%n" />
+			<!-- e.g. 2026-03-10 13:22:19,346 [DEBUG] SimpleClassName
+			(Thread:main) - functionName(): debug log message -->
+		</Console>
+	</Appenders>
+	<Loggers>
+		<!-- In development, always set log level of Main to DEBUG, printing DO
+		loop time as a result -->
+		<Logger name="tankpack.Main" level="DEBUG"></Logger>
+
+		<!-- Always set log level of Driver_Communication to TRACE, the log
+		level of each state machine determines whether messages will be logged
+		or not -->
+		<Logger name="tankpack.Driver_Communication" level="TRACE"></Logger>
+
+		<!-- Always set GpioHandler log level to INFO to prevent BashCmd spam -->
+		<Logger name="tankpack.GpioHandler" level="INFO"></Logger>
+
+		<!-- State machine specific log levels (replace Sm_ with specific name
+		to enable debug) -->
+		<Logger name="tankpack.Sm_" level="DEBUG"></Logger>
+
+		<!-- Root logger as fallback / catch-all -->
+		<Root level="INFO">
+			<AppenderRef ref="Console" />
+		</Root>
+	</Loggers>
+</Configuration>

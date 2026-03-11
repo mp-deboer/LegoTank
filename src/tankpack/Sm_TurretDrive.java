@@ -2,12 +2,11 @@ package tankpack;
 
 public class Sm_TurretDrive extends Sm_TurretDrive_Generated
 {
-	private final boolean localDebug = false;
 	private final long MAXSPEEDINCREASEPERSECOND = 25L; // in percent / second
 	
 	private int maxSpeedStep;
 	
-	public Sm_TurretDrive(Driver_Communication dc, Driver_Sound ds, boolean debug)
+	public Sm_TurretDrive(Driver_Communication dc, Driver_Sound ds)
 	{
 		// Inject custom variables into Generated vars
 		super.vars.ds = ds;
@@ -22,7 +21,7 @@ public class Sm_TurretDrive extends Sm_TurretDrive_Generated
 		if (maxSpeedStep <= 0)
 			maxSpeedStep = 1;
 		
-		initializeAndStart(dc, debug);
+		initializeAndStart(dc);
 	}
 	
 	@Override
@@ -41,9 +40,8 @@ public class Sm_TurretDrive extends Sm_TurretDrive_Generated
 		{
 			super.vars.currentSpeed = calculateNextSpeed(super.vars.currentSpeed, super.vars.targetSpeed, maxSpeedStep);
 			
-			if (localDebug)
-				System.out.printf("Turret speed set to %d (maxSpeedStep = %d)\n", super.vars.currentSpeed,
-						maxSpeedStep);
+			super.logger.debug(
+					String.format("Turret speed set to %d (maxSpeedStep = %d)", super.vars.currentSpeed, maxSpeedStep));
 			
 			// Fire turretSpeed event
 			super.fireEvent("turretSpeed", super.vars.currentSpeed);

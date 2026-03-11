@@ -2,9 +2,9 @@ package tankpack;
 
 public class Sm_Turret extends Sm_Turret_Generated
 {
-	public Sm_Turret(Driver_Communication dc, boolean debug)
+	public Sm_Turret(Driver_Communication dc)
 	{
-		initializeAndStart(dc, debug);
+		initializeAndStart(dc);
 	}
 	
 	@Override

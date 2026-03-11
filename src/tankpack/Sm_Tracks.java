@@ -2,9 +2,9 @@ package tankpack;
 
 public class Sm_Tracks extends Sm_Tracks_Generated
 {
-	public Sm_Tracks(Driver_Communication dc, boolean debug)
+	public Sm_Tracks(Driver_Communication dc)
 	{
-		initializeAndStart(dc, debug);
+		initializeAndStart(dc);
 	}
 	
 	@Override

@@ -19,10 +19,28 @@ export ANNOUNCE_BODY
 CC = javac
 RC = java
 RFLAGS = -ea -Djava.library.path=".:/usr/lib/jni"
-CLASSPATH = /usr/share/java/jinput.jar:./bin
+CLASSPATH = /usr/share/java/jinput.jar:/usr/share/java/log4j-api.jar:/usr/share/java/log4j-core.jar:./bin
 SOURCES = $(wildcard src/tankpack/*.java src/tankpack/enums/*.java src/tankpack/util/*.java)
 CLASSES = $(SOURCES:src/tankpack/%.java=bin/tankpack/%.class)
 JAR = Tank.jar
+
+# === LOG4J2 CONFIG SWITCH (dev vs prod) ===
+
+# Development: use dev-config
+dev-config:
+	cp src/log4j2-dev.xml bin/log4j2.xml
+
+# Production / JAR: force using the prod-config
+force-prod-config:
+	cp src/log4j2-prod.xml bin/log4j2.xml
+
+# Use dev-config by default
+start: dev-config
+
+# Force using prod-config for JAR
+$(JAR): force-prod-config
+
+# === End of LOG4J2 section ===
 
 # Default target: incremental compilation
 default: $(CLASSES)
@@ -32,9 +50,8 @@ bin/tankpack/%.class: src/tankpack/%.java
 	$(CC) -classpath $(CLASSPATH) -d bin $<
 
 # Other options
-# Start with debug = true / prints DO loop time
 start: $(CLASSES)
-	$(RC) $(RFLAGS) -classpath $(CLASSPATH):. tankpack.Main true
+	$(RC) $(RFLAGS) -classpath $(CLASSPATH):. tankpack.Main
 
 # Bulk compile class files, even with unchanged java files
 all: clean
@@ -45,7 +62,7 @@ allstart: all start
 jar: $(JAR)
 
 $(JAR): $(CLASSES)
-	cd bin && jar cfem ../$@ tankpack/Main ../Manifest.txt tankpack -C .. sound
+	cd bin && jar cfem ../$@ tankpack/Main ../Manifest.txt tankpack log4j2.xml -C .. sound
 
 jarstart: jar
 	$(RC) $(RFLAGS) -jar $(JAR)
@@ -53,7 +70,7 @@ jarstart: jar
 alljar: rjar all jar
 
 clean:
-	rm -rf bin/tankpack
+	rm -rf bin/*
 
 rjar:
 	rm -f $(JAR)

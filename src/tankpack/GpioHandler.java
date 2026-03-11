@@ -1,6 +1,10 @@
 package tankpack;
 
 import java.io.IOException;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import tankpack.util.BashCmd;
 import tankpack.util.BashCmd.BashResult;
 
@@ -8,10 +12,11 @@ import tankpack.util.BashCmd.BashResult;
 // This offloads the main DO loop.
 public class GpioHandler extends Thread
 {
-	private final boolean debug;
 	private final int pinBtn;
 	private final int pinLed2;
 	private final long pollIntervalMs;
+	
+	private static final Logger logger = LogManager.getLogger(GpioHandler.class);
 	
 	// Shared state: use volatile for visibility across threads
 	private volatile boolean currentButtonState = false;
@@ -28,15 +33,14 @@ public class GpioHandler extends Thread
 	
 	private BashCmd bashCmd;
 	
-	public GpioHandler(int pinBtn, int pinLed2, boolean debug)
+	public GpioHandler(int pinBtn, int pinLed2)
 	{
 		this.pinBtn = pinBtn;
 		this.pinLed2 = pinLed2;
-		this.debug = debug;
 		this.pollIntervalMs = 200L; // set to 200ms polling
-		this.setName("GpioHandlerThread");
+		this.setName(this.getClass().getSimpleName());
 		
-		bashCmd = new BashCmd(debug);
+		bashCmd = new BashCmd(logger);
 	}
 	
 	@Override
@@ -102,8 +106,7 @@ public class GpioHandler extends Thread
 		// Kill existing process if running (releases the GPIO line)
 		if (gpioProcess != null)
 		{
-			if (debug)
-				System.out.println("Terminating existing gpioset process");
+			logger.debug("Terminating existing gpioset process");
 			
 			gpioProcess.destroy();
 			
@@ -131,13 +134,8 @@ public class GpioHandler extends Thread
 			catch (Exception e)
 			{
 				// ignore if interrupt
-				// Thread.currentThread().interrupt(); // Propagate interrupt
-				
 				if (!(e instanceof InterruptedException))
-				{
-					System.err.println("! Error (killGpioProcess): " + e.getMessage());
-					e.printStackTrace();
-				}
+					logger.error(e.getMessage(), e);
 			}
 		}
 	}
@@ -156,13 +154,8 @@ public class GpioHandler extends Thread
 		catch (IOException | InterruptedException e)
 		{
 			// ignore if interrupt
-			// Thread.currentThread().interrupt(); // Propagate interrupt
-			
 			if (!(e instanceof InterruptedException))
-			{
-				System.err.println("! Error (setGpioState): " + e.getMessage());
-				e.printStackTrace();
-			}
+				logger.error(e.getMessage(), e);
 		}
 		
 		return null;
@@ -187,13 +180,8 @@ public class GpioHandler extends Thread
 		catch (IOException | InterruptedException e)
 		{
 			// ignore if interrupt
-			// Thread.currentThread().interrupt(); // Propagate interrupt
-			
 			if (!(e instanceof InterruptedException))
-			{
-				System.err.println("! Error (getGpioState): " + e.getMessage());
-				e.printStackTrace();
-			}
+				logger.error(e.getMessage(), e);
 		}
 		
 		return false;

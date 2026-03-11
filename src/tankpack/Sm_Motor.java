@@ -4,7 +4,6 @@ import tankpack.enums.MotorType;
 
 public class Sm_Motor extends Sm_Motor_Generated
 {
-	private final boolean localDebug = false;
 	private final long MAXSPEEDINCREASEPERSECOND = 20L; // in percent / second
 	
 	private String speedEvent;
@@ -14,7 +13,7 @@ public class Sm_Motor extends Sm_Motor_Generated
 	private int maxSpeedStep;
 	private int sign = 1; // sign is -1 or 1, used to convert engineSpeed to targetSpeed
 	
-	public Sm_Motor(Driver_Communication dc, Driver_Hardware dh, MotorType m, boolean debug)
+	public Sm_Motor(Driver_Communication dc, Driver_Hardware dh, MotorType m)
 	{
 		// Inject custom variables into Generated vars
 		super.vars.dh = dh;
@@ -36,7 +35,7 @@ public class Sm_Motor extends Sm_Motor_Generated
 		// Assert speed of motor is 0
 		super.vars.dh.setMotorSpeed(m, 0);
 		
-		initializeAndStart(dc, m.name(), debug);
+		initializeAndStart(dc, m.name());
 	}
 	
 	@Override
@@ -103,9 +102,8 @@ public class Sm_Motor extends Sm_Motor_Generated
 		{
 			super.vars.currentSpeed = calculateNextSpeed(super.vars.currentSpeed, targetSpeed, maxSpeedStep);
 			
-			if (localDebug)
-				System.out.printf("Setting speed of %s to %d (maxSpeedStep = %d)\n", motorType, super.vars.currentSpeed,
-						maxSpeedStep);
+			super.logger.debug(String.format("Setting speed of %s to %d (maxSpeedStep = %d)", motorType,
+					super.vars.currentSpeed, maxSpeedStep));
 			
 			// Set actual speed of motor to currentSpeed
 			super.vars.dh.setMotorSpeed(motorType, super.vars.currentSpeed);
