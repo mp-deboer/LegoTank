@@ -1,6 +1,6 @@
 # Java Source
 
-This folder contains the Java source code for the Raspberry Pi-based control software of the LEGO tank robot project. It implements concurrent state machines for handling PS3/PS5 controller input, hardware interactions, line following, and other behaviours. The code uses the JInput library for reading the PS3 & PS5 controllers, and relies on the PIC firmware (in `../Pibotica.X`) for low-level motor/sensor control.
+This folder contains the Java source code for the Raspberry Pi-based control software of the LEGO tank robot project. It implements state machines for handling PS3/PS5 controller input, hardware interactions, line following, and other behaviours. The code uses the JInput library for reading the PS3 & PS5 controllers, and relies on the PIC firmware (in `../Pibotica.X`) for low-level motor/sensor control.
 
 **Important**: Before running the code, follow the **SPI Configuration** steps in the [root README](../../README.md) to set the correct 500 kHz clock speed.
 
@@ -14,15 +14,15 @@ This folder contains the Java source code for the Raspberry Pi-based control sof
     - `Sm_*_Generated.java` + `Sm_*.java`
 
 - **Drivers**:
-    - `Driver_Hardware.java` + `GpioHandler.java`: Maps high-level commands to SPI bytes for PIC communication (e.g., motor speeds, sensor reads, LEDs). Uses bash command `gpioset` for setting LED2 state and input/output streams for SPI read/write operations.
+    - `Driver_Hardware.java` + `GpioHandler.java`: Maps high-level commands to SPI bytes for PIC communication (e.g., motor speeds, sensor reads, LEDs). Uses bash command `gpioset` for setting LED2 state, `gpioget` for getting GPIO button state and input/output streams for SPI read/write operations.
     - `Driver_PsController.java`: Contains functionality to poll PS3/PS5 controller components (buttons, sticks) using JInput.
-    - `Driver_Sound.java`: Contains functionality to load and play audio (.wav) files.
+    - `Driver_Sound.java`: Contains functionality to load, play and fade volume of audio (.wav) files.
 
 - **Utilities**:
     - `enums/Direction.java`: Enum containing all possible directions given by LEFTSTICK events.
-    - `enums/MotorType.java`: Enum containing all motors and their custom setSpeed event.
+    - `enums/MotorType.java`: Enum containing all motors and their custom setSpeed events.
     - `enums/PsComponent.java`: Enum for PS3 & PS5 controller components (e.g., buttons, axes).
-    - `enums/SensorPosition.java`: Enum for IR sensor positions (left, middle, right).
+    - `enums/SensorPosition.java`: Enum for IR sensor positions (left, middle, right) and their corresponding simulateEvent (if simulation is enabled).
     - `enums/SingleSoundId.java`: Enum containing all sounds and their custom trigger event.
     - `util/BashCmd.java`: Contains a public function to execute a Bash command.
 

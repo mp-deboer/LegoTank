@@ -4,7 +4,7 @@ This is a revival of a 2014 school project: a line-following robot built as a LE
 
 ## Project Structure
 
-- **ss/**: StateSmith visual state machine designs (`.drawio`) and auto-generation script (`build.csx`). See [ss/README.md](./ss/README.md).
+- **ss/**: StateSmith visual state machine designs (`.drawio.svg`) and auto-generation script (`build.csx`). See [ss/README.md](./ss/README.md).
 - **src/tankpack**: Java control software running on the Raspberry Pi. See [src/tankpack/README.md](./src/tankpack/README.md) for details on code structure, core classes, drivers, and StateSmith generated code + thin wrappers.
 - **src/Pibotica.X**: C firmware for the PIC microcontroller (PiBotica PCB). See [src/Pibotica.X/README.md](./src/Pibotica.X/README.md) for details on the firmware and microcontroller.
 - **sound/**: Audio resources (.wav files) for event-triggered sounds.
@@ -20,7 +20,8 @@ Developed and tested on:
 
 Required libraries:
 - **JInput**: 2.0.1 (for PS3/PS5 controller input; requires JUtils).
-- **libgpiod2**: 1.6.3 (required at runtime for setting the state of LED2).
+- **liblog4j2**: 2.19.0 (Apache Log4j: for logging info/debug/etc. messages).
+- **libgpiod2**: 1.6.3 (required at runtime for setting the state of LED2 using `gpioset` and getting the state of the GPIO button using `gpioget`).
 
 ### SPI Configuration (required for HardwareDriver)
 The PIC firmware expects a SPI clock speed of 500 kHz.
@@ -65,11 +66,13 @@ After this step, the SPI bus will default to 500 kHz, matching the speed used by
 - Motors: Three DC motors (left/right tracks, turret) controlled via PWM.
 - Controller: PS3 or PS5 via Bluetooth (using JInput).
 - LEDs: For feedback (e.g., when receiving PS3/PS5 input or when following a line).
+- GPIO button: Introduces a way to re-attempt connecting to WiFi and to shutdown the Raspberry Pi.
 
 ## Revival Status
-- v1.1 – Original 2014 baseline
-- v1.2 – PS5 controller support (USB)
-- v1.3 – Migrated to Raspberry Pi OS Bookworm + deadlock fix
-- **v2.0** – Full migration to StateSmith
+- v1.1 - Original 2014 baseline
+- v1.2 - PS5 controller support (USB)
+- v1.3 - Migrated to Raspberry Pi OS Bookworm + deadlock fix
+- v2.0 - Full migration to StateSmith
+- **v2.1** - Added Log4j2 structured logging, GPIO button control, graceful shutdown, new GpioButton/WifiMngr/eStop/TurretDrive/Engine state machines, new sounds and a sensor simulation mode
 
 The old manual LTS-based state machines have been replaced with modern, visual, auto-generated code.
