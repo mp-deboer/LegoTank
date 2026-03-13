@@ -2,8 +2,7 @@ package tankpack;
 
 public class Sm_Engine extends Sm_Engine_Generated
 {
-	private final long MAXSPEEDINCREASEPERSECOND = 25L; // in percent / second, slightly faster than Motor due to delay
-														// in sounds
+	private final long MAXSPEEDINCREASEPERSECOND = 40L; // in percent / second
 	private int maxSpeedStep;
 	
 	public Sm_Engine(Driver_Communication dc, Driver_Sound ds)

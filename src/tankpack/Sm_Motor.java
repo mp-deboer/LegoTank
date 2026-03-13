@@ -4,7 +4,7 @@ import tankpack.enums.MotorType;
 
 public class Sm_Motor extends Sm_Motor_Generated
 {
-	private final long MAXSPEEDINCREASEPERSECOND = 20L; // in percent / second
+	private final long MAXSPEEDINCREASEPERSECOND = 100L; // in percent / second
 	
 	private String speedEvent;
 	private String engineEvent;
@@ -114,10 +114,7 @@ public class Sm_Motor extends Sm_Motor_Generated
 	{
 		int diff = target - current;
 		
-		// If decelerating / ramping towards 0, multiplier = 3, otherwise 1
-		int multiplier = (Integer.signum(current) != 0 && Integer.signum(diff) == -Integer.signum(current)) ? 3 : 1;
-		
-		int nextSpeed = current + Integer.signum(diff) * step * multiplier;
+		int nextSpeed = current + Integer.signum(diff) * step;
 		
 		if (Integer.signum(diff) != Integer.signum(target - nextSpeed))
 			nextSpeed = target; // Overshoot fix
